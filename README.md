@@ -15,6 +15,26 @@ Developed for the **[{Tech: Europe} AI Gaming Hack](https://hackathons.techeurop
 
 ---
 
+## 🚀 Running the game
+
+```bash
+# Terminal 1 — FastAPI task & mission engine
+cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — React client (proxies /api to the backend)
+cd frontend && npm install && npm run dev
+```
+
+| Path | Contents |
+| :--- | :--- |
+| `backend/` | FastAPI task generation engine, mission state, Gemini narrative with offline fallback ([README](./backend/README.md)) |
+| `frontend/` | React + Vite client: cinematic intro, tactical Paris map, webcam terminal ([README](./frontend/README.md)) |
+
+The client runs without the backend — missions then come from the built-in offline district profiles.
+
+---
+
 ## 📖 Project Documentation
 
 Detailed project architecture, gameplay mechanics, and technical roadmaps are tracked in [`PLAN.md`](./PLAN.md).

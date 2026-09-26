@@ -202,7 +202,16 @@ To deliver a dynamic yet balanced experience, tasks are created via a **Hybrid G
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Tech Stack Selection (Agreed Architecture)
+### 4.2 Repository Layout
+
+| Path | Contents |
+| :--- | :--- |
+| `backend/` | FastAPI task & mission engine (Phase 3), Gemini narrative adapter with deterministic offline fallback |
+| `frontend/` | React + Vite client (Phases 1, 4, 5): cinematic intro, tactical map, webcam terminal |
+
+Gesture classification currently runs in the browser via MediaPipe Tasks Vision; the backend remains authoritative for mission generation, step advancement, hold/confidence thresholds and time limits. The Phase 2 OpenCV/MediaPipe server pipeline consumes the same `GestureAttempt` contract, so it can take over classification without changing the mission API.
+
+### 4.3 Tech Stack Selection (Agreed Architecture)
 
 | Component | Choice | Rationale |
 | :--- | :--- | :--- |
@@ -265,9 +274,9 @@ To deliver a dynamic yet balanced experience, tasks are created via a **Hybrid G
 - [ ] Implement client-side task validation and real-time step advancement when player completes gesture.
 
 ### Phase 4: Interactive Paris Map & Game State Engine - Prajwal
-- [ ] Implement interactive vector SVG map of the 16 curated Paris arrondissements.
-- [ ] Build game state manager (current district, unlocked progression tree, liberated stats, score).
-- [ ] Create district reclamation animations (cyber-ice melting, glitch dissipation, golden dawn glow).
+- [x] Implement interactive vector SVG map of the 16 curated Paris arrondissements.
+- [x] Build game state manager (current district, unlocked progression tree, liberated stats, score).
+- [x] Create district reclamation animations (cyber-ice melting, glitch dissipation, golden dawn glow).
 
 ### Phase 5: Audio, Visual FX & Cyberpunk Polish - ele
 - [ ] Dystopian ambient soundtrack and Web Audio sound effects (terminal keystrokes, scanline hum, victory chimes).
