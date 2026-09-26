@@ -101,35 +101,39 @@ Equipped with a low-tech resistance optical terminal (the player's real-world we
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                             CLIENT (BROWSER)                             │
-├────────────────────────────────┬─────────────────────────────────────────┤
-│          UI / GAMEPLAY         │           VISION & AI ENGINE            │
-│  - React / Next.js / Vite      │  - Google MediaPipe Gesture Recognizer  │
-│  - Tailwind CSS / Framer Motion│  - 21 3D Hand Landmarks @ 60 FPS        │
-│  - Lucide Icons & SFX WebAudio │  - Custom Gesture Rule Classifier       │
-│  - Interactive SVG Paris Map   │  - Multimodal Gemini API (Optional for  │
-│  - HTML5 Video Cinematic Player│    dynamic commentary & lore validation)│
-└────────────────────────────────┴─────────────────────────────────────────┘
-                                 │ (HTTPS / WebSockets)
-                                 ▼
+│                         FRONTEND (REACT + VITE)                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│  - Cyberpunk Video Player (Opening Takeover Cinematic & Drop-in Support) │
+│  - Interactive SVG Paris Tactical Map (16 Curated Iconic Districts)     │
+│  - Resistance Terminal HUD & Camera Feed (WebRTC / WebSocket Stream)    │
+│  - Visual Sign Guide Cards (Hand posture diagrams for instant learning)  │
+│  - Web Audio SFX & Cyberpunk Synth Ambience                              │
+└────────────────────────────────────┬─────────────────────────────────────┘
+                                     │ WebSocket / REST API
+                                     ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                         BACKEND / SERVICES (OPTIONAL)                    │
-│  - Node.js / Express or FastAPI                                          │
-│  - Game State Persistence & Leaderboards (Local / Supabase)              │
-│  - Multimodal AI Prompting (Gemini 1.5/2.0 Flash)                        │
+│                   BACKEND ENGINE (PYTHON + FASTAPI)                      │
+├──────────────────────────────────────────────────────────────────────────┤
+│  - FastAPI Web Server & Async WebSocket Hub                              │
+│  - OpenCV + Google MediaPipe Vision Pipeline (Hand Landmarks & Gestures) │
+│  - Real-Time Gesture Classifier & Confidence Accumulator                 │
+│  - Game State Manager (Session, Arrondissement Liberation, Timers)       │
+│  - Optional: Gemini 2.0 / DeepMind LLM Dialogue & Narrative Adapter      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Tech Stack Selection
+### 4.2 Tech Stack Selection (Agreed Architecture)
 
 | Component | Choice | Rationale |
 | :--- | :--- | :--- |
-| **Framework** | **React / Vite / TypeScript** (or Next.js) | Extremely fast startup, instant HMR, zero setup hurdles for hackathon judges, friction-free browser deployment. |
-| **Styling & UI** | **Tailwind CSS + Framer Motion** | Cinematic cyberpunk HUD animations, glitch effects, smooth district transitions. |
-| **Vision AI** | **Google MediaPipe Tasks Vision** (`@mediapipe/tasks-vision`) | Google DeepMind partner alignment; runs locally in browser via WebAssembly/GPU; ultra-low latency (<20ms); zero cloud cost/rate limits. |
-| **Secondary AI** | **Gemini 2.0 Flash / Gemini 1.5 Pro** | Generates dynamic resistance commander briefings and AI boss dialogue reacting to player performance. |
-| **Map Visualization** | **Interactive Vector SVG / Canvas Paris Map** | Crisp rendering of the 16 arrondissements, responsive hover effects, dynamic territory coloration. |
-| **Audio & SFX** | **Web Audio API / Howler.js** | Ambient dystopian drones, cybernetic sound effects, satisfying unlock chimes. |
+| **Backend Server** | **Python (FastAPI + Uvicorn)** | High-throughput asynchronous Python server with native WebSockets for low-latency video frame streaming and game state synchronization. |
+| **Vision & AI Engine** | **OpenCV (`cv2`) + Google MediaPipe (`mediapipe`)** | Real-time 21 hand landmarks tracking, gesture classification, and hand geometry analysis. Aligns with Google DeepMind hackathon partnership. |
+| **Frontend Client** | **React + Vite + TypeScript** | Blazing-fast development, ultra-responsive UI, seamless component modularity for video player, HUD, and tactical map. |
+| **Styling & FX** | **Tailwind CSS + Lucide Icons** | Dystopian neon aesthetic, CRT scanlines, glitch transitions, and holographic map styling. |
+| **Sign System** | **Universal Intuitive Signs + Visual Cards** | High accessibility for judges and players (Peace, Open Hand, Fist, Thumbs Up, Point, Heart, Shield) with instant visual feedback. |
+| **Cinematic Intro** | **Cyberpunk Video Component** | Embedded teaser video with glitch overlay and subtitle typist, ready for seamless drop-in of the final cinematic MP4. |
+| **Map Engine** | **Interactive Vector SVG Map of Paris** | 16 curated iconic districts with dynamic visual state (frozen/corrupted vs. liberated gold). |
+
 
 ---
 
