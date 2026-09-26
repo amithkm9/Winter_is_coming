@@ -1,0 +1,134 @@
+/** Camera pipeline integration with mocked hardware/model responses, not a physical-camera accuracy test. */
+import test, { after } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
+import { WinterMission } from '../src/winter/mission.ts';
+
+const scratch = await mkdtemp(path.join(tmpdir(), 'winter-camera-test-'));
+after(() => rm(scratch, { recursive: true, force: true }));
+const output = path.join(scratch, 'camera.mjs');
+await build({ entryPoints: [path.resolve('src/services/camera.ts')], outfile: output, bundle: true, format: 'esm', platform: 'node', logLevel: 'silent',
+  define: { 'import.meta.env.BASE_URL': "'./'" },
+  plugins: [{ name: 'hardware-and-api-boundaries', setup(build) {
+    build.onResolve({ filter: /^\.\/api$/ }, () => ({ path: 'api', namespace: 'test' }));
+    build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: "export const API_BASE='';", loader: 'js' }));
+    build.onResolve({ filter: /^@mediapipe\/tasks-vision$/ }, () => ({ path: 'vision', namespace: 'vision-test' }));
+    build.onLoad({ filter: /.*/, namespace: 'vision-test' }, () => ({ contents: `
+      export const FilesetResolver={forVisionTasks:async path=>{globalThis.__cameraFixture.assets.push(path);return {};}};
+      export const HandLandmarker={createFromOptions:async(_files,options)=>{globalThis.__cameraFixture.assets.push(options.baseOptions.modelAssetPath);return globalThis.__cameraFixture.detector;}};
+    `, loader: 'js' }));
+  } }],
+});
+const { CameraController } = await import(pathToFileURL(output).href);
+const hand = Array.from({ length: 21 }, (_, i) => ({ x: .2 + i * .015, y: .3 + i * .01, z: -.01 * i }));
+const response = (payload, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => payload });
+const flush = () => new Promise(resolve => setImmediate(resolve));
+const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
+
+function fixture(t) {
+  const properties = ['window', 'navigator', 'performance', 'fetch', '__cameraFixture'];
+  const previous = new Map(properties.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+  const events = new EventTarget(), statuses = [], requests = [], inputs = [], cameraEvents = [];
+  const state = { now: 0, scheduled: null, assets: [], captures: 0, stops: 0, closed: 0,
+    warmup: () => response({ ready: true }), recognize: () => response({ sign: 'A', confidence: .98 }),
+    detector: { currentHand: hand, detectForVideo() { return { landmarks: this.currentHand ? [this.currentHand] : [] }; }, close() { state.closed++; } },
+  };
+  const set = (name, value) => Object.defineProperty(globalThis, name, { configurable: true, writable: true, value });
+  set('window', { dispatchEvent: events.dispatchEvent.bind(events), addEventListener: events.addEventListener.bind(events),
+    setTimeout(callback) { state.scheduled = callback; return 0; } });
+  set('navigator', { mediaDevices: { async getUserMedia(options) { state.captures++; assert.equal(options.audio, false); return { getTracks: () => [{ stop() { state.stops++; } }] }; } } });
+  set('performance', { now: () => state.now });
+  set('fetch', async (url, options) => { requests.push({ url, options }); return url.endsWith('/warmup') ? state.warmup() : state.recognize(); });
+  set('__cameraFixture', state);
+  const video = { srcObject: null, readyState: 2, currentTime: 0, async play() {} };
+  const context = { clearRect() {}, beginPath() {}, lineTo() {}, moveTo() {}, stroke() {}, arc() {}, fill() {} };
+  const canvas = { width: 320, height: 240, getContext: () => context };
+  const controller = new CameraController(video, canvas, text => statuses.push(text));
+  events.addEventListener('ls:gesture', event => inputs.push(event.detail));
+  events.addEventListener('ls:camera', event => cameraEvents.push(event.detail.enabled));
+  t.after(() => { controller.stop(); for (const [name, descriptor] of previous) { if (descriptor) Object.defineProperty(globalThis, name, descriptor); else delete globalThis[name]; } });
+  const frame = async (ms = 34, visibleHand = hand, fresh = true) => {
+    state.now += ms; if (fresh) video.currentTime += ms / 1000;
+    state.detector.currentHand = visibleHand;
+    const callback = state.scheduled; state.scheduled = null; callback?.(); await flush();
+  };
+  const frames = async (count, visibleHand = hand) => { for (let i = 0; i < count; i++) await frame(34, visibleHand); };
+  return { state, events, statuses, requests, inputs, cameraEvents, video, controller, frame, frames };
+}
+
+test('model preflight runs before camera permission and uses locally bundled tracking assets', async t => {
+  const f = fixture(t); assert.equal(await f.controller.start(), true);
+  assert.equal(f.controller.enabled, true); assert.equal(f.requests[0].url, '/api/recognition/warmup');
+  assert.equal(f.state.captures, 1); assert.deepEqual(f.state.assets, ['./mediapipe/wasm', './mediapipe/hand_landmarker.task']);
+  assert.ok(f.cameraEvents.includes(true));
+  f.controller.stop(); assert.equal(f.controller.enabled, false); assert.equal(f.state.stops, 1);
+});
+
+test('a backend that cannot load the model never opens the webcam', async t => {
+  const f = fixture(t); f.state.warmup = () => response({ ready: false, detail: 'Model cannot start.' }, 503);
+  assert.equal(await f.controller.start(), false); assert.equal(f.state.captures, 0); assert.deepEqual(f.state.assets, []);
+  assert.match(f.statuses.at(-1), /Model cannot start.*Keyboard inputs still work/);
+});
+
+test('actual controller and gesture gate emit camera input that advances a real relay', async t => {
+  const f = fixture(t), mission = new WinterMission(); mission.start(); mission.enterRelay(0);
+  f.events.addEventListener('ls:gesture', event => mission.submit(event.detail.sign, event.detail.source));
+  await f.controller.start(); await f.frames(52);
+  assert.deepEqual(f.inputs, [{ sign: 'A', source: 'camera' }]); assert.deepEqual(mission.state.completed, [0]);
+  assert.equal(mission.state.lastSource, 'camera');
+  const recognition = f.requests.filter(r => r.url.endsWith('/recognize'));
+  assert.equal(recognition.length, 2);
+  const payload = JSON.parse(recognition[0].options.body);
+  assert.equal(payload.frames.length, 30); assert.equal(payload.frames[0].length, 21);
+  assert.deepEqual(payload.frames[0][7], [hand[7].x, hand[7].y, hand[7].z], 'raw normalized image coordinates are not transformed in the browser');
+  assert.match(f.statuses.at(-1), /A input sent.*Lower your hand/);
+  await f.frames(20); assert.equal(f.inputs.length, 1); assert.match(f.statuses.at(-1), /A input sent/, 'confirmation remains visible despite capture loops');
+});
+
+test('duplicate video frames and tracking gaps cannot fill a stale sequence', async t => {
+  const f = fixture(t); await f.controller.start(); await f.frames(10);
+  const count = f.controller.frames.length;
+  for (let i = 0; i < 3; i++) await f.frame(34, hand, false);
+  assert.equal(f.controller.frames.length, count);
+  await f.frame(350); assert.equal(f.controller.frames.length, 1);
+  assert.equal(f.requests.filter(r => r.url.endsWith('/recognize')).length, 0);
+});
+
+test('hand disappearance aborts an in-flight result and prevents it from emitting', async t => {
+  const f = fixture(t), late = deferred(); f.state.recognize = () => late.promise;
+  await f.controller.start(); await f.frames(30);
+  const request = f.requests.find(r => r.url.endsWith('/recognize')); assert.ok(request);
+  await f.frame(34, null); assert.equal(request.options.signal.aborted, true);
+  late.resolve(response({ sign: 'A', confidence: .99 })); await flush();
+  assert.deepEqual(f.inputs, []); assert.equal(f.controller.frames.length, 0);
+});
+
+test('resetRecognition preserves camera but rejects a late response from an earlier terminal', async t => {
+  const f = fixture(t), mission = new WinterMission(), late = deferred(); let prediction = 0;
+  mission.start(); mission.enterRelay(0);
+  f.events.addEventListener('ls:gesture', event => mission.submit(event.detail.sign, event.detail.source));
+  f.state.recognize = () => ++prediction === 2 ? late.promise : response({ sign: 'A', confidence: .98 });
+  await f.controller.start(); await f.frames(51);
+  assert.equal(prediction, 2); const old = f.requests.filter(r => r.url.endsWith('/recognize'))[1];
+  mission.exitRelay(); mission.enterRelay(2); f.controller.resetRecognition();
+  assert.equal(f.controller.enabled, true); assert.equal(f.state.stops, 0); assert.equal(old.options.signal.aborted, true);
+  await f.frames(30); assert.equal(prediction, 3); assert.equal(mission.state.step, 0);
+  f.state.now += 500; late.resolve(response({ sign: 'A', confidence: .99 })); await flush();
+  assert.equal(mission.state.step, 0); assert.deepEqual(f.inputs, []);
+});
+
+test('stopping during preflight prevents any late model response from reopening the camera', async t => {
+  const f = fixture(t), late = deferred(); f.state.warmup = () => late.promise;
+  const starting = f.controller.start(); await flush(); f.controller.stop();
+  late.resolve(response({ ready: true })); assert.equal(await starting, false);
+  assert.equal(f.controller.enabled, false); assert.equal(f.state.captures, 0);
+});
+
+test('a held gesture must be physically lowered before the same label can send again', async t => {
+  const f = fixture(t); await f.controller.start(); await f.frames(52); assert.equal(f.inputs.length, 1);
+  await f.frames(16, null); await f.frames(52); assert.equal(f.inputs.length, 2);
+});
