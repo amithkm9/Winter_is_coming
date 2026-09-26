@@ -318,7 +318,7 @@ function move(dt:number){
     const input=movementDirection(x,z,cameraForward.x,cameraForward.z);
     const topSpeed=keys.has('ShiftLeft')||keys.has('ShiftRight')||touch.state.running?RUN_SPEED:WALK_SPEED;
     direction.set(input.x*topSpeed,0,input.z*topSpeed).sub(velocity);
-    const change=dt*(x||z?16:24);
+    const change=dt*(x||z?24:36);
     if(direction.length()>change)direction.setLength(change);
     velocity.add(direction);
     if(velocity.lengthSq()<.0001)velocity.set(0,0,0);
@@ -329,7 +329,7 @@ function move(dt:number){
   }else velocity.set(0,0,0);
   const dx=position.x-oldX,dz=position.z-oldZ,distance=Math.hypot(dx,dz);
   const actualSpeed=dt>0?distance/dt:0;
-  walking=canMove&&distance>.0001;running=walking&&actualSpeed>(WALK_SPEED+RUN_SPEED)/2;
+  walking=canMove&&distance>.0001;running=walking&&actualSpeed>WALK_SPEED*.85;
   if(walking){courier.object.rotation.y=turnToward(oldYaw,facingYaw(dx,dz,oldYaw),dt);if(academy)onboarding.move(distance);}
   else if(!paused&&state.phase==='terminal'){
     const target=academy?trainingBeacon.position:world.relays.find(r=>r.id===state.activeRelay)?.position;

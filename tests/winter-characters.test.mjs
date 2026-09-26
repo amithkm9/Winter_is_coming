@@ -93,7 +93,7 @@ test('walk/run plants alternate, knees articulate and boot soles remain above th
           assert.ok(new THREE.Box3().setFromObject(planted).min.y < .08, 'Footfall event corresponds to a ground contact');
         }
       }
-      assert.ok(contacts.length >= 16 && contacts.length <= 36, 'Cadence fits a short-step walk or run');
+      assert.ok(contacts.length >= 24 && contacts.length <= 54, 'Cadence fits a short-step walk or run');
       for (let i = 1; i < contacts.length; i++) assert.notEqual(contacts[i], contacts[i - 1]);
       assert.ok(Math.max(...kneeAngles) - Math.min(...kneeAngles) > .2, 'The knee bends through swing');
       assert.ok(Math.max(...footHeights) > .1, 'Swinging boots lift clear of the floor');
