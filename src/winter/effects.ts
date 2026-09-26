@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RUN_SPEED } from './movement.ts';
 import { getCharacter, type CharacterId } from './characters.ts';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -226,11 +227,11 @@ export function createCourier(characterId: CharacterId = 'noor') {
         castBlend = damp(castBlend, casting ? 1 : 0, 12, delta);
         turnBlend = damp(turnBlend, turning, 9, delta);
         // Local stance travel cancels the controller's actual world displacement:
-        // 3m/s maximum, a .475m walking stride, and a .51m running stride.
+        // Use the shared run speed with a .475m walking stride and .51m running stride.
         // No phase can advance when collision resolution has stopped the child.
         const stance = .52 - .16 * THREE.MathUtils.clamp((motionBlend - .5) * 2, 0, 1);
         const halfStride = .22 + .035 * motionBlend;
-        if (actualSpeed > .015 && delta > 0) phase += delta * (actualSpeed * 3) * Math.PI * 2 * stance / (2 * halfStride);
+        if (actualSpeed > .015 && delta > 0) phase += delta * (actualSpeed * RUN_SPEED) * Math.PI * 2 * stance / (2 * halfStride);
       } else { motionBlend = 0; castBlend = casting ? 1 : 0; turnBlend = 0; }
       const gait = reduced ? 0 : motionBlend;
       const stanceFraction = .52 - .16 * THREE.MathUtils.clamp((gait - .5) * 2, 0, 1);

@@ -2,6 +2,8 @@
 export interface MovementDirection { readonly x: number; readonly z: number }
 const TAU = Math.PI * 2;
 export const TURN_SPEED = 18;
+export const WALK_SPEED = 2.4;
+export const RUN_SPEED = 4.8;
 const EPSILON = 1e-8;
 const zero = (): MovementDirection => ({ x: 0, z: 0 });
 

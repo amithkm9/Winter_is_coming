@@ -15,7 +15,7 @@ await build({ entryPoints: [path.resolve('src/services/camera.ts')], outfile: ou
   define: { 'import.meta.env.BASE_URL': "'./'" },
   plugins: [{ name: 'hardware-and-api-boundaries', setup(build) {
     build.onResolve({ filter: /^\.\/api$/ }, () => ({ path: 'api', namespace: 'test' }));
-    build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: "export const API_BASE='';", loader: 'js' }));
+    build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: "export const API_BASE=''; export const API_HEADERS={'ngrok-skip-browser-warning':'1'};", loader: 'js' }));
     build.onResolve({ filter: /^@mediapipe\/tasks-vision$/ }, () => ({ path: 'vision', namespace: 'vision-test' }));
     build.onLoad({ filter: /.*/, namespace: 'vision-test' }, () => ({ contents: `
       export const FilesetResolver={forVisionTasks:async path=>{globalThis.__cameraFixture.assets.push(path);if(globalThis.__cameraFixture.trackingError)throw globalThis.__cameraFixture.trackingError;return {};}};
@@ -68,6 +68,7 @@ test('camera permission is requested immediately and uses locally bundled tracki
   assert.equal(f.state.captures, 1); assert.equal(f.requests.length, 0);
   assert.equal(await starting, true);
   assert.equal(f.controller.enabled, true); assert.equal(f.requests[0].url, '/api/recognition/warmup');
+  assert.equal(f.requests[0].options.headers['ngrok-skip-browser-warning'], '1');
   assert.equal(f.state.captures, 1); assert.deepEqual(f.state.assets, ['./mediapipe/wasm', './mediapipe/hand_landmarker.task']);
   assert.ok(f.cameraEvents.includes(true));
   f.controller.stop(); assert.equal(f.controller.enabled, false); assert.equal(f.state.stops, 1);
@@ -75,7 +76,8 @@ test('camera permission is requested immediately and uses locally bundled tracki
 
 test('a backend failure leaves a live preview with a specific recognition error', async t => {
   const f = fixture(t); f.state.warmup = () => response({ ready: false, detail: 'Model cannot start.' }, 503);
-  assert.equal(await f.controller.start(), false); assert.equal(f.state.captures, 1); assert.deepEqual(f.state.assets, []);
+  assert.equal(await f.controller.start(), false); assert.equal(f.requests[0].options.headers['ngrok-skip-browser-warning'], '1');
+  assert.equal(f.state.captures, 1); assert.deepEqual(f.state.assets, []);
   assert.equal(f.controller.previewEnabled, true); assert.equal(f.controller.enabled, false);
   assert.equal(f.controller.starting, false); assert.equal(f.state.stops, 0);
   assert.match(f.statuses.at(-1), /Model cannot start.*Keyboard inputs still work/);
@@ -89,6 +91,7 @@ test('actual controller and gesture gate emit camera input that advances a real 
   assert.equal(mission.state.lastSource, 'camera');
   const recognition = f.requests.filter(r => r.url.endsWith('/recognize'));
   assert.equal(recognition.length, 2);
+  assert.equal(recognition[0].options.headers['ngrok-skip-browser-warning'], '1');
   const payload = JSON.parse(recognition[0].options.body);
   assert.equal(payload.frames.length, 30); assert.equal(payload.frames[0].length, 21);
   assert.deepEqual(payload.frames[0][7], [hand[7].x, hand[7].y, hand[7].z], 'raw normalized image coordinates are not transformed in the browser');

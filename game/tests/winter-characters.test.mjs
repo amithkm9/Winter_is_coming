@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import * as THREE from 'three';
 import { CHARACTERS, getCharacter } from '../src/winter/characters.ts';
 import { createCourier } from '../src/winter/effects.ts';
+import { RUN_SPEED } from '../src/winter/movement.ts';
 
 test('three immutable profiles have distinct identities and valid bundled portrait assets', async () => {
   assert.deepEqual(CHARACTERS.map(c => c.id), ['noor', 'elio', 'mira']);
@@ -92,7 +93,7 @@ test('walk/run plants alternate, knees articulate and boot soles remain above th
           assert.ok(new THREE.Box3().setFromObject(planted).min.y < .08, 'Footfall event corresponds to a ground contact');
         }
       }
-      assert.ok(contacts.length >= 10 && contacts.length <= 22, 'Cadence fits a short-step walk or run');
+      assert.ok(contacts.length >= 16 && contacts.length <= 36, 'Cadence fits a short-step walk or run');
       for (let i = 1; i < contacts.length; i++) assert.notEqual(contacts[i], contacts[i - 1]);
       assert.ok(Math.max(...kneeAngles) - Math.min(...kneeAngles) > .2, 'The knee bends through swing');
       assert.ok(Math.max(...footHeights) > .1, 'Swinging boots lift clear of the floor');
@@ -120,7 +121,7 @@ test('planted feet approximately cancel actual controller travel rather than sli
       for (let i = 0; i < 400; i++) courier.update(i * dt, speed, false, false, false, dt);
       let previous = [], checks = 0;
       for (let i = 0; i < 240; i++) {
-        courier.object.position.z -= speed * 3 * dt;
+        courier.object.position.z -= speed * RUN_SPEED * dt;
         courier.update(i * dt, speed, false, false, false, dt); courier.object.updateMatrixWorld(true);
         const current = ['left-foot', 'right-foot'].map(name => {
           const foot = courier.object.getObjectByName(name);

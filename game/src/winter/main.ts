@@ -12,7 +12,7 @@ import { WinterCampaign, CHAPTERS, type ChapterId } from './campaign';
 import { WinterOnboarding } from './onboarding';
 import { getCharacter } from './characters';
 import { createJourneyUI } from './journey';
-import { movementDirection, facingYaw, turnToward } from './movement';
+import { movementDirection, facingYaw, turnToward, WALK_SPEED, RUN_SPEED } from './movement';
 import { createMotionEffects } from './motion-effects';
 import { firstPersonPose, parseViewMode } from './view';
 import { CameraController } from '../services/camera';
@@ -316,9 +316,9 @@ function move(dt:number){
     const z=THREE.MathUtils.clamp(Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'))+touch.state.y,-1,1);
     if(settings.view==='first-person')cameraForward.set(-Math.sin(yaw),0,-Math.cos(yaw));else camera.getWorldDirection(cameraForward);
     const input=movementDirection(x,z,cameraForward.x,cameraForward.z);
-    const topSpeed=keys.has('ShiftLeft')||keys.has('ShiftRight')||touch.state.running?3.0:1.5;
+    const topSpeed=keys.has('ShiftLeft')||keys.has('ShiftRight')||touch.state.running?RUN_SPEED:WALK_SPEED;
     direction.set(input.x*topSpeed,0,input.z*topSpeed).sub(velocity);
-    const change=dt*(x||z?10:15);
+    const change=dt*(x||z?16:24);
     if(direction.length()>change)direction.setLength(change);
     velocity.add(direction);
     if(velocity.lengthSq()<.0001)velocity.set(0,0,0);
@@ -329,7 +329,7 @@ function move(dt:number){
   }else velocity.set(0,0,0);
   const dx=position.x-oldX,dz=position.z-oldZ,distance=Math.hypot(dx,dz);
   const actualSpeed=dt>0?distance/dt:0;
-  walking=canMove&&distance>.0001;running=walking&&actualSpeed>2;
+  walking=canMove&&distance>.0001;running=walking&&actualSpeed>(WALK_SPEED+RUN_SPEED)/2;
   if(walking){courier.object.rotation.y=turnToward(oldYaw,facingYaw(dx,dz,oldYaw),dt);if(academy)onboarding.move(distance);}
   else if(!paused&&state.phase==='terminal'){
     const target=academy?trainingBeacon.position:world.relays.find(r=>r.id===state.activeRelay)?.position;
@@ -337,7 +337,7 @@ function move(dt:number){
   }
   const turn=dt>0?THREE.MathUtils.clamp(Math.atan2(Math.sin(courier.object.rotation.y-oldYaw),Math.cos(courier.object.rotation.y-oldYaw))/(dt*8),-1,1):0;
   courier.object.position.copy(position);
-  const pose=courier.update(time,Math.min(1,actualSpeed/3.0),state.phase==='terminal',discoveries.collected().length===5,settings.reduced,paused?0:dt,turn);
+  const pose=courier.update(time,Math.min(1,actualSpeed/RUN_SPEED),state.phase==='terminal',discoveries.collected().length===5,settings.reduced,paused?0:dt,turn);
   if(pose.footstep&&walking){sound('step');motionEffects.step(position,courier.object.rotation.y,pose.side,running);}
   contactShadow.visible=active&&!intro;contactShadow.position.set(position.x,.022,position.z);contactShadow.rotation.z=-courier.object.rotation.y;
 }

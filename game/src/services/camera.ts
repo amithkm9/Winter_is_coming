@@ -1,4 +1,4 @@
-import { API_BASE } from './api';
+import { API_BASE, API_HEADERS } from './api';
 import { GestureGate } from './gesture-gate';
 import { emit, type Sign } from '../game/contracts';
 import type { HandLandmarker } from '@mediapipe/tasks-vision';
@@ -68,7 +68,7 @@ export class CameraController {
       }, { once: true });
       stage = 'model';
       this.report('Camera connected. Preparing sign recognition…');
-      const response = await fetch(`${API_BASE}/api/recognition/warmup`, { method: 'POST', signal: AbortSignal.any([startup.signal, AbortSignal.timeout(45000)]) });
+      const response = await fetch(`${API_BASE}/api/recognition/warmup`, { method: 'POST', headers: API_HEADERS, signal: AbortSignal.any([startup.signal, AbortSignal.timeout(45000)]) });
       if (generation !== this.generation) return false;
       const result = await response.json().catch(() => null) as { ready?: boolean; detail?: string } | null;
       if (generation !== this.generation) return false;
@@ -169,7 +169,7 @@ export class CameraController {
     this.report('Checking the model prediction. Keep your hand steady.');
     try {
       const response = await fetch(`${API_BASE}/api/recognize`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frames }),
+        method: 'POST', headers: { ...API_HEADERS, 'Content-Type': 'application/json' }, body: JSON.stringify({ frames }),
         signal: AbortSignal.any([inference.signal, AbortSignal.timeout(7000)]),
       });
       if (generation !== this.generation || serial !== this.requestSerial) return;
