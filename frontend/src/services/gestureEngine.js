@@ -53,9 +53,26 @@ class GestureVisionEngine {
         console.log("⚡ MediaPipe Gesture Vision Engine initialized on GPU/WASM");
         return true;
       } catch (err) {
-        console.warn("MediaPipe remote model load issue, falling back to Geometric Heuristic Vision Pipeline:", err);
-        this.isReady = true; // Still ready using our pure-math geometric classifier
-        return true;
+        console.warn("Gesture recognizer unavailable, trying landmark-only CPU pipeline:", err);
+        try {
+          const vision = await FilesetResolver.forVisionTasks(
+            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+          );
+          this.landmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+              delegate: 'CPU'
+            },
+            runningMode: 'VIDEO',
+            numHands: 1
+          });
+          this.isReady = true;
+          console.log("Hand landmarker ready — geometric heuristic classifier active");
+          return true;
+        } catch (fallbackErr) {
+          this.initPromise = null;
+          throw fallbackErr;
+        }
       }
     })();
 
@@ -73,6 +90,17 @@ class GestureVisionEngine {
     let mlGesture = null;
     let landmarks = null;
     const now = performance.now();
+
+    if (!this.recognizer && this.landmarker) {
+      try {
+        const results = this.landmarker.detectForVideo(videoElement, now);
+        if (results && results.landmarks && results.landmarks.length > 0) {
+          landmarks = results.landmarks[0];
+        }
+      } catch (e) {
+        // Frame dropped or skipped
+      }
+    }
 
     if (this.recognizer) {
       try {

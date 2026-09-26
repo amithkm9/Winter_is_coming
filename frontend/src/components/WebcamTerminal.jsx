@@ -73,6 +73,7 @@ export default function WebcamTerminal({
   // Initialize Camera & Vision Model
   useEffect(() => {
     let stream = null;
+    let disposed = false;
 
     const initVision = async () => {
       try {
@@ -87,6 +88,11 @@ export default function WebcamTerminal({
           },
           audio: false
         });
+
+        if (disposed) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -105,6 +111,7 @@ export default function WebcamTerminal({
     initVision();
 
     return () => {
+      disposed = true;
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }

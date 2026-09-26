@@ -16,7 +16,7 @@ export default function TacticalMap({
   const isUnlocked = (sector) => {
     if (isLiberated(sector.id)) return true;
     if (!sector.unlockRequires || sector.unlockRequires.length === 0) return true;
-    return sector.unlockRequires.some(reqId => liberatedIds.includes(reqId));
+    return sector.unlockRequires.every(reqId => liberatedIds.includes(reqId));
   };
 
   return (
