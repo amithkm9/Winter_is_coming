@@ -54,7 +54,7 @@ Set `LEARNSIGN_MODEL_PATH` in `backend/.env` to the absolute trusted model path 
 
 The health `recognition` flag means the model file and TensorFlow dependency are present; it does not load the model or prove accuracy. A corrupt/incompatible file can still fail its first inference with HTTP 503. No image frames are accepted, stored or logged by this service; landmark sequences are processed in memory.
 
-Call `/api/recognition/warmup` before opening the camera to complete the first TensorFlow import, model load and graph execution. It runs synthetic features without returning them as a detected sign. Recognition uses `model(batch, training=False)` under the inference lock, avoiding per-request dataset/threadpool overhead. The response validates six finite probabilities whose sum is approximately one. A warmup success establishes operational readiness only; label order and real-hand accuracy are still unverified. Warmup uses the standard 20-per-minute route limit.
+Call `/api/recognition/warmup` before sending landmark sequences to complete the first TensorFlow import, model load and graph execution. It runs synthetic features without returning them as a detected sign. Recognition uses `model(batch, training=False)` under the inference lock, avoiding per-request dataset/threadpool overhead. The response validates six finite probabilities whose sum is approximately one. A warmup success establishes operational readiness only; label order and real-hand accuracy are still unverified. Warmup uses the standard 20-per-minute route limit.
 
 ## Deployment
 

@@ -57,3 +57,18 @@ rules.
 pytest -q
 ruff check .
 ```
+
+
+## Root 3D game's recognition service
+
+This directory also contains the independent `main.py` recognition/companion service used by the root Three.js game. It runs as `main:app` on **8100**, separate from the `app.main:app` task engine on **8000**.
+
+Install `requirements-model.txt` for H5 inference and set `LEARNSIGN_MODEL_PATH` to your trusted model file in a local `.env`. The browser opens its preview first, then calls `/api/recognition/warmup` before sending landmark sequences. Warmup does not establish recognition accuracy. Gemini and Gradium use server-side keys; configure `CORS_ORIGINS` for the deployed game's origin.
+
+From the repository root:
+
+```sh
+backend/.venv/bin/python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8100
+```
+
+See [model status](MODEL_STATUS.md) and the [mobile/deployment guide](../docs/MOBILE_ITCH.md). The legacy task engine's `/health` is not a substitute for the recognition service's `/api/health` or `/api/recognition/warmup`.

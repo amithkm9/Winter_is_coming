@@ -53,7 +53,7 @@ const stored=(()=>{try{const data=JSON.parse(localStorage.getItem(SETTINGS)||'{}
 const settings={view:parseViewMode(stored.view),low:typeof stored.low==='boolean'?stored.low:mobileDevice,reduced:typeof stored.reduced==='boolean'?stored.reduced:false,sound:stored.sound!==false,music:stored.music!==false,volume:typeof stored.volume==='number'&&Number.isFinite(stored.volume)?Math.max(0,Math.min(.8,stored.volume)):.45,voice:stored.voice===true};
 let active=false,paused=false,intro=false,introTime=0,animation=0,lastTime=performance.now(),time=0,saveClock=0;
 let yaw=0,pitch=0,dragging=false,lookPointer:number|null=null,lastPointer=0,lastPointerY=0,modalOpen=false,previousPhase='',previousRelays=0,previousRespawns=0,hints=0;
-let nearest:number|null=null,nearCore=false,toastTimer=0,transmissionTimer=0,service:ServiceHealth|null=null,cameraStarting=false;
+let nearest:number|null=null,nearCore=false,toastTimer=0,transmissionTimer=0,service:ServiceHealth|null=null;
 let walking=false,running=false,wasScanned=false,feedbackTimer=0,operation=0;
 let academy=false;
 const keys=new Set<string>();
@@ -269,7 +269,7 @@ window.addEventListener('keydown',event=>{
 });
 window.addEventListener('keyup',event=>keys.delete(event.code));
 for(const event of ['pointerdown','keydown'])window.addEventListener(event,()=>{if(active&&!paused)void soundscape.unlock();});
-window.addEventListener('blur',()=>{keys.clear();touch.reset();lookPointer=null;dragging=false;if(active&&!modalOpen&&!cameraStarting){if(intro){paused=true;soundscape.setPaused(true);stopVoice();}else pauseMenu();}});
+window.addEventListener('blur',()=>{keys.clear();touch.reset();lookPointer=null;dragging=false;if(active&&!modalOpen&&!tracker.starting){if(intro){paused=true;soundscape.setPaused(true);stopVoice();}else pauseMenu();}});
 window.addEventListener('focus',()=>{if(intro&&!modalOpen){paused=false;soundscape.setPaused(false);}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&active&&!modalOpen){keys.clear();touch.reset();lookPointer=null;dragging=false;if(intro){paused=true;soundscape.setPaused(true);stopVoice();}else pauseMenu();}});
 renderer.domElement.addEventListener('pointerdown',e=>{if(lookPointer!==null||!active||paused||intro||mission.state.phase==='terminal')return;dragging=true;lookPointer=e.pointerId;lastPointer=e.clientX;lastPointerY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId);});
@@ -279,12 +279,12 @@ for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.d
 $('camera-button').onclick=()=>{
   if(!$('camera-panel').hidden){tracker.stop();$('camera-panel').hidden=true;return;}
   openModal(`<div class="label gold">GESTURE RECOGNITION (EXPERIMENTAL)</div><h2 id="modal-title">Optical Hand Tracking</h2><p>Webcam gesture recognition is an experimental AI feature that connects to a local Python vision server.</p><p><strong>On Mobile & Web:</strong> You can play and transmit all ciphers instantly by tapping the on-screen buttons (<strong>A, B, C, 1, 2, 3</strong>) or <strong>TRANSMIT INPUT</strong>!</p><button class="enter" id="camera-enable">START WEBCAM →</button><button class="enter secondary" id="camera-cancel">USE TOUCH BUTTONS</button>`);
-  $('camera-cancel').onclick=closeModal;$('camera-enable').onclick=async()=>{cameraStarting=true;closeModal();$('camera-panel').hidden=false;try{await tracker.start();}finally{cameraStarting=false;}};
+  $('camera-cancel').onclick=closeModal;$('camera-enable').onclick=()=>{closeModal();$('camera-panel').hidden=false;void tracker.start();};
 };
 $('camera-close').onclick=()=>{tracker.stop();$('camera-panel').hidden=true;};
-$('terminal-camera').onclick=()=>{if(tracker.enabled){$('camera-panel').hidden=false;return;}$('camera-button').click();};
-$('camera-retry').onclick=async()=>{if(cameraStarting)return;cameraStarting=true;try{await tracker.start();}finally{cameraStarting=false;}};
-window.addEventListener('ls:camera',((e:CustomEvent<{enabled:boolean}>)=>{$('mode').textContent=e.detail.enabled?'EXPERIMENTAL CAMERA + SIMULATION':'GESTURE INPUTS · A B C / 1 2 3';}) as EventListener);
+$('terminal-camera').onclick=()=>{if(tracker.enabled||tracker.starting){$('camera-panel').hidden=false;return;}if(!$('camera-panel').hidden){void tracker.start();return;}$('camera-button').click();};
+$('camera-retry').onclick=()=>{if(!tracker.starting)void tracker.start();};
+window.addEventListener('ls:camera',((e:CustomEvent<{enabled:boolean;preview?:boolean}>)=>{$('mode').textContent=e.detail.enabled?'EXPERIMENTAL CAMERA + SIMULATION':e.detail.preview?'CAMERA PREVIEW · RECOGNITION NOT READY':'GESTURE INPUTS · A B C / 1 2 3';}) as EventListener);
 
 function toggleView(){
   if(!active||paused||intro||mission.state.phase==='liberating')return;
@@ -378,9 +378,9 @@ function updateHud(){
   $('view-button').setAttribute('aria-label',settings.view==='first-person'?'Switch to third-person view (V)':'Switch to eye-level view (V)');
   const currentInput=practice.state.active?practice.state:state;
   $('camera-target').textContent=state.phase==='terminal'?(practice.state.complete?'Practice complete · return to the relay':`SHOW ${currentInput.sequence[currentInput.step]||'…'} · HOLD STEADY, THEN LOWER YOUR HAND`):'Approach a terminal and press E to use your signs.';
-  $<HTMLButtonElement>('camera-retry').disabled=cameraStarting;
-  $<HTMLButtonElement>('terminal-camera').disabled=cameraStarting;
-  $('terminal-camera').textContent=tracker.enabled?'CAMERA ACTIVE · SHOW YOUR SIGN':'USE CAMERA →';const terminal=active&&!intro&&state.phase==='terminal';$('terminal').hidden=!terminal;document.body.classList.toggle('terminal-open',terminal);
+  $<HTMLButtonElement>('camera-retry').disabled=tracker.starting;
+  $<HTMLButtonElement>('terminal-camera').disabled=tracker.starting;
+  $('terminal-camera').textContent=tracker.starting?'STARTING CAMERA…':tracker.enabled?'CAMERA ACTIVE · SHOW YOUR SIGN':tracker.previewEnabled?'RETRY SIGN RECOGNITION →':'USE CAMERA →';const terminal=active&&!intro&&state.phase==='terminal';$('terminal').hidden=!terminal;document.body.classList.toggle('terminal-open',terminal);
   const rehearsal=practice.state;document.body.classList.toggle('practising',terminal&&rehearsal.active);
   $('memory-progress').textContent=`◇ MEMORIES ${discoveries.collected().length} / 5${discoveries.collected().length===5?' · SCARF UNLOCKED':''}`;
   $('alert-value').textContent=`${Math.round(state.alert)}%`;$('alert-fill').style.width=`${state.alert}%`;
@@ -448,7 +448,7 @@ function frame(now:number){
   move(dt);
   if(active&&!paused&&!intro){
     const scanned=world.isHazard?world.isHazard(position,time):world.drones.some(drone=>Math.hypot(drone.position.x-position.x,drone.position.z-position.z)<5.3);
-    const danger=scanned&&!cameraStarting&&!academy&&!practice.state.active&&['explore','terminal'].includes(before.phase);
+    const danger=scanned&&!tracker.starting&&!academy&&!practice.state.active&&['explore','terminal'].includes(before.phase);
     if(danger&&!wasScanned)feedback(world.hazardLabel||'SCANNER NEARBY · MOVE OUT OF THE RED POOL',false);wasScanned=danger;
     $('scan-warning').hidden=!danger;$('scan-warning').querySelector('strong')!.textContent=world.hazardLabel||'SCANNER NEARBY';$('scan-warning').querySelector('span')!.textContent=world.hazardLabel?'Move away from the glowing danger zone':'Move out of the red pool';document.body.classList.toggle('being-scanned',danger);
     const state=mission.tick(dt,danger);

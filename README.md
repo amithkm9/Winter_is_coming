@@ -61,3 +61,18 @@ npm test
 npm run build
 npm run package:winter
 ```
+
+
+## Root game and camera startup
+
+The current root game also runs with `npm ci` and `npm run dev` from the repository root. Open `http://127.0.0.1:5173/`. Its ASL reference images, subtitled intro, Enter interaction and reset flow remain available; the separately maintained `game/` version above is also preserved.
+
+Both camera controllers request permission immediately and show a live preview before loading recognition. If recognition fails, the preview stays visible with a specific error and retry action. Closing a pending camera request releases retry controls.
+
+For the root game's sign model service, install `backend/requirements-model.txt`, configure `LEARNSIGN_MODEL_PATH` in local `backend/.env`, and run:
+
+```sh
+backend/.venv/bin/python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8100
+```
+
+The port **8000** task engine above is a different service. Static itch.io uploads need a separately hosted HTTPS recognition backend configured with `VITE_API_URL`; pushing source code alone does not deploy that backend. Camera label mapping and real-hand accuracy remain unverified.

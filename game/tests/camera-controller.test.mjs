@@ -18,7 +18,7 @@ await build({ entryPoints: [path.resolve('src/services/camera.ts')], outfile: ou
     build.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: "export const API_BASE='';", loader: 'js' }));
     build.onResolve({ filter: /^@mediapipe\/tasks-vision$/ }, () => ({ path: 'vision', namespace: 'vision-test' }));
     build.onLoad({ filter: /.*/, namespace: 'vision-test' }, () => ({ contents: `
-      export const FilesetResolver={forVisionTasks:async path=>{globalThis.__cameraFixture.assets.push(path);return {};}};
+      export const FilesetResolver={forVisionTasks:async path=>{globalThis.__cameraFixture.assets.push(path);if(globalThis.__cameraFixture.trackingError)throw globalThis.__cameraFixture.trackingError;return {};}};
       export const HandLandmarker={createFromOptions:async(_files,options)=>{globalThis.__cameraFixture.assets.push(options.baseOptions.modelAssetPath);return globalThis.__cameraFixture.detector;}};
     `, loader: 'js' }));
   } }],
@@ -40,7 +40,10 @@ function fixture(t) {
   const set = (name, value) => Object.defineProperty(globalThis, name, { configurable: true, writable: true, value });
   set('window', { dispatchEvent: events.dispatchEvent.bind(events), addEventListener: events.addEventListener.bind(events),
     setTimeout(callback) { state.scheduled = callback; return 0; } });
-  set('navigator', { mediaDevices: { async getUserMedia(options) { state.captures++; assert.equal(options.audio, false); return { getTracks: () => [{ stop() { state.stops++; } }] }; } } });
+  const track = new EventTarget(); track.stop = () => state.stops++;
+  state.track = track;
+  state.capture = () => ({ getTracks: () => [track], getVideoTracks: () => [track] });
+  set('navigator', { mediaDevices: { async getUserMedia(options) { state.captures++; assert.equal(options.audio, false); return state.capture(options); } } });
   set('performance', { now: () => state.now });
   set('fetch', async (url, options) => { requests.push({ url, options }); return url.endsWith('/warmup') ? state.warmup() : state.recognize(); });
   set('__cameraFixture', state);
@@ -60,17 +63,21 @@ function fixture(t) {
   return { state, events, statuses, requests, inputs, cameraEvents, video, controller, frame, frames };
 }
 
-test('model preflight runs before camera permission and uses locally bundled tracking assets', async t => {
-  const f = fixture(t); assert.equal(await f.controller.start(), true);
+test('camera permission is requested immediately and uses locally bundled tracking assets', async t => {
+  const f = fixture(t); const starting=f.controller.start();
+  assert.equal(f.state.captures, 1); assert.equal(f.requests.length, 0);
+  assert.equal(await starting, true);
   assert.equal(f.controller.enabled, true); assert.equal(f.requests[0].url, '/api/recognition/warmup');
   assert.equal(f.state.captures, 1); assert.deepEqual(f.state.assets, ['./mediapipe/wasm', './mediapipe/hand_landmarker.task']);
   assert.ok(f.cameraEvents.includes(true));
   f.controller.stop(); assert.equal(f.controller.enabled, false); assert.equal(f.state.stops, 1);
 });
 
-test('a backend that cannot load the model never opens the webcam', async t => {
+test('a backend failure leaves a live preview with a specific recognition error', async t => {
   const f = fixture(t); f.state.warmup = () => response({ ready: false, detail: 'Model cannot start.' }, 503);
-  assert.equal(await f.controller.start(), false); assert.equal(f.state.captures, 0); assert.deepEqual(f.state.assets, []);
+  assert.equal(await f.controller.start(), false); assert.equal(f.state.captures, 1); assert.deepEqual(f.state.assets, []);
+  assert.equal(f.controller.previewEnabled, true); assert.equal(f.controller.enabled, false);
+  assert.equal(f.controller.starting, false); assert.equal(f.state.stops, 0);
   assert.match(f.statuses.at(-1), /Model cannot start.*Keyboard inputs still work/);
 });
 
@@ -125,10 +132,70 @@ test('stopping during preflight prevents any late model response from reopening 
   const f = fixture(t), late = deferred(); f.state.warmup = () => late.promise;
   const starting = f.controller.start(); await flush(); f.controller.stop();
   late.resolve(response({ ready: true })); assert.equal(await starting, false);
-  assert.equal(f.controller.enabled, false); assert.equal(f.state.captures, 0);
+  assert.equal(f.controller.enabled, false); assert.equal(f.state.captures, 1); assert.equal(f.state.stops, 1);
 });
 
 test('a held gesture must be physically lowered before the same label can send again', async t => {
   const f = fixture(t); await f.controller.start(); await f.frames(52); assert.equal(f.inputs.length, 1);
   await f.frames(16, null); await f.frames(52); assert.equal(f.inputs.length, 2);
+});
+
+
+test('preview plays while model startup is pending, and closing it cancels startup', async t => {
+  const f=fixture(t), late=deferred(); f.state.warmup=()=>late.promise;
+  const starting=f.controller.start(); await flush();
+  assert.equal(f.controller.previewEnabled,true); assert.equal(f.controller.starting,true);
+  assert.ok(f.video.srcObject); assert.equal(f.video.muted,true); assert.equal(f.video.playsInline,true);
+  f.controller.stop(); assert.equal(f.controller.starting,false); assert.equal(f.video.srcObject,null);
+  late.resolve(response({ready:true})); assert.equal(await starting,false);
+  assert.equal(f.controller.enabled,false); assert.deepEqual(f.state.assets,[]);
+});
+
+test('camera permission denial identifies site and macOS settings without loading the model', async t => {
+  const f=fixture(t); f.state.capture=()=>{throw Object.assign(new Error('denied'),{name:'NotAllowedError'});};
+  assert.equal(await f.controller.start(),false);
+  assert.equal(f.requests.length,0); assert.equal(f.controller.previewEnabled,false);
+  assert.equal(f.controller.starting,false); assert.match(f.statuses.at(-1),/site controls.*System Settings/);
+});
+
+test('busy camera has actionable recovery and makes no recognition requests', async t => {
+  const f=fixture(t); f.state.capture=()=>{throw Object.assign(new Error('busy'),{name:'NotReadableError'});};
+  assert.equal(await f.controller.start(),false);
+  assert.equal(f.requests.length,0); assert.match(f.statuses.at(-1),/Close other camera apps or video calls/);
+});
+
+test('unsupported camera constraints retry once with an unconstrained video request', async t => {
+  const f=fixture(t), capture=f.state.capture;
+  f.state.capture=options=>{if(f.state.captures===1)throw Object.assign(new Error('constraints'),{name:'OverconstrainedError'});assert.equal(options.video,true);return capture();};
+  assert.equal(await f.controller.start(),true); assert.equal(f.state.captures,2);
+});
+
+test('cancelled permission request cannot reopen the preview over a newer successful start', async t => {
+  const f=fixture(t), late=deferred(), capture=f.state.capture;
+  f.state.capture=()=>late.promise;
+  const old=f.controller.start(); f.controller.stop();
+  assert.equal(f.controller.starting,false);
+  f.state.capture=capture; assert.equal(await f.controller.start(),true);
+  let staleStops=0;late.resolve({getTracks:()=>[{stop(){staleStops++;}}]});
+  assert.equal(await old,false); assert.equal(staleStops,1);
+  assert.equal(f.controller.enabled,true); assert.equal(f.controller.previewEnabled,true);
+});
+
+test('hand tracking failure preserves preview, and retry can recover recognition', async t => {
+  const f=fixture(t); f.state.trackingError=new TypeError('tracking failed');
+  assert.equal(await f.controller.start(),false); assert.equal(f.controller.previewEnabled,true);
+  assert.match(f.statuses.at(-1),/Preview is live.*Hand tracking could not load/);
+  f.state.trackingError=null; assert.equal(await f.controller.start(),true); assert.equal(f.state.stops,1);
+});
+
+test('disconnected camera releases resources and offers restart', async t => {
+  const f=fixture(t); await f.controller.start(); f.state.track.dispatchEvent(new Event('ended'));
+  assert.equal(f.controller.enabled,false); assert.equal(f.controller.previewEnabled,false);
+  assert.equal(f.state.closed,1); assert.match(f.statuses.at(-1),/camera disconnected.*RESTART CAMERA/);
+});
+
+test('insecure or unsupported origin explains the localhost recovery URL', async t => {
+  const f=fixture(t); navigator.mediaDevices=undefined;
+  assert.equal(await f.controller.start(),false); assert.equal(f.requests.length,0);
+  assert.match(f.statuses.at(-1),/http:\/\/127\.0\.0\.1:5173\//);
 });

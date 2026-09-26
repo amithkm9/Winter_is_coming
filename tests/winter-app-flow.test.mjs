@@ -24,11 +24,11 @@ await build({entryPoints:[entry],outfile:output,bundle:true,format:'esm',platfor
  b.onLoad({filter:/.*/,namespace:'fixture'},args=>({loader:'js',contents:{
   renderer:`export * from ${JSON.stringify(path.resolve('node_modules/three/build/three.module.js'))};export class WebGLRenderer{constructor(){this.domElement=document.createElement('canvas');this.shadowMap={};this.ratio=1;}setPixelRatio(v){this.ratio=v;}getPixelRatio(){return this.ratio;}setSize(){}dispose(){}render(){}}`,
   effects:`export {createCourier} from ${JSON.stringify(path.resolve('src/winter/effects.ts'))};export const createEffects=()=>({update(){},render(){},resize(){},dispose(){}});`,
-  camera:`export class CameraController{enabled=false;async start(){this.enabled=true;return true;}stop(){this.enabled=false;}resetRecognition(){}}`,
+  camera:`export class CameraController{enabled=false;starting=false;generation=0;defer=false;async start(){const generation=++this.generation;this.starting=true;if(this.defer)await new Promise(resolve=>this.finish=resolve);if(generation!==this.generation)return false;this.starting=false;this.enabled=true;return true;}stop(){this.generation++;this.enabled=false;this.starting=false;}resetRecognition(){}}`,
   api:`export async function health(){return null;}export async function getHint(){return{text:'fixture',source:'authored'};}export async function speak(){return false;}export function stopVoice(){}`,
   audio:`export class WinterAudio{configure(){}setPaused(){}async unlock(){}play(){}update(){}dispose(){}}`,
  }[args.path]}));
- b.onLoad({filter:/\/src\/winter\/main\.ts$/},async()=>({loader:'ts',contents:(await readFile(entry,'utf8'))+`\nexport const appFixture={get snapshot(){return{chapter,academy,phase:mission.state.phase,position:{x:position.x,z:position.z},paused,captureSecondsRemaining:mission.state.captureSecondsRemaining,completed:mission.state.completed,world:world.group.name,relays:world.relays.map(r=>({id:r.id,x:r.position.x,z:r.position.z})),core:{x:world.core.x,z:world.core.z},profile:campaign.state};},hazard(on){world.isHazard=()=>on;},place(x,z){position.set(x,0,z);velocity.set(0,0,0);updateHud();},step(n=1,ms=50){for(let i=0;i<n;i++)frame(lastTime+ms);},dispose(){signGuide.dispose();touch.dispose();journey.dispose();discoveries.dispose();courier.dispose();world.dispose();}};`}));
+ b.onLoad({filter:/\/src\/winter\/main\.ts$/},async()=>({loader:'ts',contents:(await readFile(entry,'utf8'))+`\nexport const appFixture={tracker,get snapshot(){return{chapter,academy,phase:mission.state.phase,position:{x:position.x,z:position.z},paused,captureSecondsRemaining:mission.state.captureSecondsRemaining,completed:mission.state.completed,world:world.group.name,relays:world.relays.map(r=>({id:r.id,x:r.position.x,z:r.position.z})),core:{x:world.core.x,z:world.core.z},profile:campaign.state};},hazard(on){world.isHazard=()=>on;},place(x,z){position.set(x,0,z);velocity.set(0,0,0);updateHud();},step(n=1,ms=50){for(let i=0;i<n;i++)frame(lastTime+ms);},dispose(){signGuide.dispose();touch.dispose();journey.dispose();discoveries.dispose();courier.dispose();world.dispose();}};`}));
 }}]});
 let serial=0;
 async function fixture(t,{legacy=false,mobile=false,recovery=false,width=390,height=844}={}){
@@ -125,4 +125,19 @@ test('returning to title after capture does not trap settings or help dialogs',a
  f.w.document.querySelector('.journey-back').click();
  f.click('menu-settings');f.click('settings-close');assert.equal(f.el('modal').hidden,true);
  f.click('how-to-play');f.click('guide-close');assert.equal(f.el('modal').hidden,true);
+});
+
+
+test('closing pending camera permission releases retry controls and ignores late startup',async t=>{
+ const f=await fixture(t);f.click('chapter-map');f.click('chapter-academy');f.click('launch-chapter');
+ f.app.tracker.defer=true;f.click('camera-button');f.click('camera-enable');f.app.step();
+ assert.equal(f.app.tracker.starting,true);assert.equal(f.el('camera-retry').disabled,true);
+ // Browser permission dialogs can blur the tab; keep the explicit camera startup alive.
+ f.w.dispatchEvent(new f.w.Event('blur'));assert.equal(f.el('modal').hidden,true);
+ f.click('camera-close');f.app.step();assert.equal(f.app.tracker.starting,false);assert.equal(f.el('camera-retry').disabled,false);
+ const finishOld=f.app.tracker.finish;f.app.tracker.defer=false;
+ f.click('camera-button');f.click('camera-enable');await Promise.resolve();f.app.step();
+ assert.equal(f.app.tracker.enabled,true);assert.equal(f.el('camera-panel').hidden,false);
+ finishOld();await Promise.resolve();f.app.step();
+ assert.equal(f.app.tracker.enabled,true);assert.equal(f.el('camera-retry').disabled,false);
 });

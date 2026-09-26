@@ -86,7 +86,7 @@ class Recognizer:
             raise RecognitionUnavailable() from exc
 
     def warmup(self) -> dict:
-        # Load AND execute the graph before camera capture. Synthetic data has no
+        # Load AND execute the graph before processing captured landmarks. Synthetic data has no
         # linguistic interpretation and is never returned as a detected gesture.
         self._predict([[0.0] * 63 for _ in range(SEQUENCE_LENGTH)])
         return {"ready": True, "verified": False, "labels": list(LABELS),

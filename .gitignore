@@ -55,3 +55,13 @@ Thumbs.db
 
 # Workspace / agent tools
 .kilo/
+
+# Root 3D game local output/configuration
+artifacts/
+.pytest_cache/
+.coverage
+coverage/
+.env.*
+!.env.example
+*.h5
+*.keras

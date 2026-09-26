@@ -28,6 +28,8 @@ export class CameraController {
   private lastStatus = '';
   constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private status: (text: string) => void) {}
   get enabled(): boolean { return this.running; }
+  get starting(): boolean { return this.startup !== null; }
+  get previewEnabled(): boolean { return this.stream !== null; }
 
   /** Clear the previous interaction's input while preserving the camera stream. */
   resetRecognition(): void {
@@ -41,15 +43,38 @@ export class CameraController {
     this.stop();
     const generation = this.generation;
     const startup = new AbortController(); this.startup = startup;
-    this.report('Checking the recognition model. First startup can take a moment…');
+    let stage: 'camera' | 'preview' | 'model' | 'tracking' = 'camera';
     try {
-      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access requires HTTPS or localhost.');
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access requires HTTPS or localhost. On this laptop, open http://127.0.0.1:5173/ instead of a network IP address.');
+      this.report('Allow camera access in the browser prompt. Microphone is not requested.');
+      // Request permission directly from the player's click, before model/WASM loading.
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 30 }, facingMode: { ideal: 'user' } }, audio: false });
+      } catch (error) {
+        if (generation !== this.generation) return false;
+        if (!(error instanceof Error) || error.name !== 'OverconstrainedError') throw error;
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      if (generation !== this.generation) { stream.getTracks().forEach(t => t.stop()); return false; }
+      this.stream = stream; this.video.srcObject = stream;
+      this.video.muted = true; this.video.playsInline = true;
+      stage = 'preview';
+      await this.video.play();
+      if (generation !== this.generation) return false;
+      for (const track of stream.getVideoTracks()) track.addEventListener('ended', () => {
+        if (generation !== this.generation) return;
+        this.stop(); this.report('The camera disconnected or permission was revoked. Reconnect it, allow camera access, and choose RESTART CAMERA.', 0, true);
+      }, { once: true });
+      stage = 'model';
+      this.report('Camera connected. Preparing sign recognition…');
       const response = await fetch(`${API_BASE}/api/recognition/warmup`, { method: 'POST', signal: AbortSignal.any([startup.signal, AbortSignal.timeout(45000)]) });
       if (generation !== this.generation) return false;
       const result = await response.json().catch(() => null) as { ready?: boolean; detail?: string } | null;
       if (generation !== this.generation) return false;
       if (!response.ok || result?.ready !== true) throw new Error(result?.detail && typeof result.detail === 'string' ? result.detail.slice(0, 240) : 'The recognition service is not ready. Start the backend and check its model setup.');
-      this.report('Loading local hand tracking…');
+      stage = 'tracking';
+      this.report('Camera connected. Loading hand tracking…');
       const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision');
       if (generation !== this.generation) return false;
       const base = import.meta.env?.BASE_URL || './';
@@ -61,22 +86,23 @@ export class CameraController {
       });
       if (generation !== this.generation) { detector.close(); return false; }
       this.detector = detector;
-      this.report('Allow camera access when your browser asks. Microphone is not requested.');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, frameRate: { ideal: 30 }, facingMode: 'user' }, audio: false });
-      if (generation !== this.generation) { stream.getTracks().forEach(t => t.stop()); return false; }
-      this.stream = stream; this.video.srcObject = stream;
-      await this.video.play();
-      if (generation !== this.generation) return false;
       this.running = true; this.report('Camera ready. Hold one hand in view. Model labels remain experimental.');
       emit('ls:camera', { enabled: true }); this.loop(generation); return true;
     } catch (error) {
       if (generation !== this.generation) return false;
-      this.stop();
-      const detail = error instanceof Error ? error.name === 'NotAllowedError' ? 'Camera permission was denied. Allow it in your browser and try again.'
-        : error.name === 'NotFoundError' ? 'No camera was found on this device.'
-        : error.name === 'TimeoutError' ? 'The recognition service took too long to start. Try again after the backend is ready.'
-        : error instanceof TypeError ? 'Could not reach the recognition service or load hand tracking. Check the backend connection and try again.' : error.message : 'Camera startup failed.';
-      this.report(`${detail} Keyboard inputs still work.`, 0, true); return false;
+      const previewAvailable = this.stream !== null && (stage === 'model' || stage === 'tracking');
+      if (!previewAvailable) this.stop();
+      const name = error instanceof Error ? error.name : '';
+      const detail = name === 'NotAllowedError' || name === 'SecurityError'
+        ? 'Camera permission is blocked. Use the site controls beside the browser address to allow Camera. On Mac, also allow this browser in System Settings → Privacy & Security → Camera, then restart the browser if requested.'
+        : name === 'NotFoundError' ? 'No camera was found. Connect a webcam and try again.'
+        : name === 'NotReadableError' || name === 'AbortError' ? 'The camera could not start. Close other camera apps or video calls, check the camera privacy switch, then retry.'
+        : name === 'TimeoutError' ? 'The recognition service took too long to start. Check the backend on port 8100, then retry.'
+        : error instanceof TypeError ? stage === 'model' ? 'Could not reach the recognition service. Check the backend on port 8100, then retry.' : stage === 'tracking' ? 'Hand tracking could not load. Reload the page, then retry.' : 'The browser could not open the camera. Check camera permissions, then retry.'
+        : error instanceof Error ? error.message : 'Camera startup failed.';
+      this.report(`${previewAvailable ? 'Preview is live, but sign recognition is not ready. ' : ''}${detail} Keyboard inputs still work.`, 0, true);
+      if (previewAvailable) emit('ls:camera', { enabled: false, preview: true });
+      return false;
     } finally { if (generation === this.generation) this.startup = null; }
   }
 
