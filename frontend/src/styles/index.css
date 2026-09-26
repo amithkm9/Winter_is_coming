@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#02050e] text-slate-100 font-sans;
+    background-image: 
+      radial-gradient(circle at 50% -20%, rgba(0, 240, 255, 0.18) 0%, transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(255, 0, 85, 0.12) 0%, transparent 45%),
+      radial-gradient(circle at 0% 100%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
+      linear-gradient(180deg, #02050e 0%, #060d1f 100%);
+    background-attachment: fixed;
+  }
+}
+
+/* Custom Cyber Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(2, 5, 14, 0.95);
+  border-left: 1px solid rgba(56, 189, 248, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00f0ff 0%, #0284c7 100%);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #38bdf8 0%, #00f0ff 100%);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.9);
+}
+
+/* Neon Glow Utilities */
+.glow-cyan {
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.15);
+}
+.glow-red {
+  box-shadow: 0 0 30px rgba(255, 0, 85, 0.45), inset 0 0 20px rgba(255, 0, 85, 0.15);
+}
+.glow-gold {
+  box-shadow: 0 0 35px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(251, 191, 36, 0.2);
+}
+.glow-green {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.45), inset 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.8), 0 0 25px rgba(0, 240, 255, 0.4);
+}
+.text-glow-gold {
+  text-shadow: 0 0 15px rgba(251, 191, 36, 0.9), 0 0 30px rgba(251, 191, 36, 0.5);
+}
+.text-glow-red {
+  text-shadow: 0 0 15px rgba(255, 0, 85, 0.9), 0 0 30px rgba(255, 0, 85, 0.5);
+}
+.text-glow-green {
+  text-shadow: 0 0 14px rgba(16, 185, 129, 0.85), 0 0 28px rgba(16, 185, 129, 0.45);
+}
+
+/* Sci-Fi Chamfered Card Corners */
+.cyber-card {
+  position: relative;
+  background: rgba(6, 14, 32, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.1), inset 0 0 20px rgba(2, 6, 23, 0.6);
+  backdrop-filter: blur(16px);
+  clip-path: polygon(
+    0 12px, 12px 0,
+    calc(100% - 12px) 0, 100% 12px,
+    100% calc(100% - 12px), calc(100% - 12px) 100%,
+    12px 100%, 0 calc(100% - 12px)
+  );
+}
+
+/* Sci-Fi Decorative Corner Brackets */
+.hud-corner-tl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-top: 2px solid #00f0ff;
+  border-left: 2px solid #00f0ff;
+  pointer-events: none;
+}
+.hud-corner-tr {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  border-top: 2px solid #00f0ff;
+  border-right: 2px solid #00f0ff;
+  pointer-events: none;
+}
+.hud-corner-bl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-bottom: 2px solid #00f0ff;
+  border-left: 2px solid #00f0ff;
+  pointer-events: none;
+}
+.hud-corner-br {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  border-bottom: 2px solid #00f0ff;
+  border-right: 2px solid #00f0ff;
+  pointer-events: none;
+}
+
+/* CRT Scanlines Overlay */
+.crt-overlay {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.35) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.04)
+  );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Cyber Hex Grid */
+.cyber-grid {
+  background-size: 36px 36px;
+  background-image: 
+    linear-gradient(to right, rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+}
+
+/* Hologram Vignette */
+.hologram-vignette {
+  background: radial-gradient(circle at center, transparent 30%, rgba(2, 5, 14, 0.85) 100%);
+  pointer-events: none;
+}
+
+/* Shimmer Button Effect */
+@keyframes cyber-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.btn-shimmer:hover::after {
+  transform: translateX(100%);
+}
