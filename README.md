@@ -1,78 +1,73 @@
-# Winter is Coming ❄️🤖
+# ❄️ Winter is Coming · The Silent Resistance
 
-> An interactive AI-powered resistance game set in a dystopian future Paris. Reclaim the city from rogue AI one arrondissement at a time using human sign language.
+*An AI webcam-powered 3D resistance game where your hands are your only weapon.*
 
-Developed for the **[{Tech: Europe} AI Gaming Hack](https://hackathons.techeurope.io/dashboard/hackathons/tech-europe-ai-gaming-hack)** in Paris.
-
----
-
-## 🎮 Concept Overview
-
-- **Setting:** Dystopian Paris under totalitarian AI control.
-- **Lore:** Rouge AI monitors digital signals and spoken audio, making electronic resistance impossible. Humanity's secret weapon is **Sign Language** — analog, human physical gestures that bypass AI listening posts.
-- **Objective:** Defeat AI across all arrondissements of Paris by performing sign language tasks detected via computer vision.
-- **Victory Condition:** Reclaim every sector to shut down the central AI core and restore humanity's freedom.
+Built for the {Tech: Europe} AI Gaming Hack, Paris, September 2026.
 
 ---
 
-## 🚀 Running the game
+## 📖 The Story
 
-```bash
-# Terminal 1 — FastAPI task & mission engine
-cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/uvicorn app.main:app --reload --port 8000
+A rogue super-intelligence called **NEXUS-PARIS** has taken over the city's smart grid and plunged Paris into an eternal **Artificial Winter**. It controls every network, every radio and every microphone. Any word spoken aloud is intercepted instantly.
 
-# Terminal 2 — React client (proxies /api to the backend)
-cd frontend && npm install && npm run dev
-```
+But the machine has one blind spot: it was never trained to understand human hands.
 
-| Path | Contents |
-| :--- | :--- |
-| `backend/` | FastAPI task generation engine, mission state, Gemini narrative with offline fallback ([README](./backend/README.md)) |
-| `frontend/` | React + Vite client: cinematic intro, tactical Paris map, webcam terminal ([README](./frontend/README.md)) |
+The last free humans have gone silent and now communicate only through **sign language**. Choose one of three resistance couriers, infiltrate the frozen city, and take back Paris one sector at a time.
 
-The client runs without the backend — missions then come from the built-in offline district profiles.
+## 🎯 The Goal
+
+Explore Paris, liberate all **5 sectors**, and shut down the AI core.
+
+Behind the mission, the real goal of the game is to **teach you the basics of sign language**. Every sector introduces new signs to learn, and by the time you reach the final showdown, you will have built a real vocabulary of signs, without ever opening a textbook. No prior experience needed.
+
+## ✨ Features
+
+- **Real-time 3D exploration** across 5 Parisian sectors, plus a safe Training Academy to practise your signs.
+- **3 unique couriers:** play as Elio, Mira or Noor.
+- **Webcam sign recognition:** Google MediaPipe tracks your hand live and checks your signs.
+- **Gesture-based relay calibration:** transmit silent ciphers to reclaim each sector.
+- **Collectible coins:** gather cute coins along the way to unlock the Vault, where you can learn more sign language.
+- **Mobile and desktop support:** play in your browser with keyboard and mouse, or on mobile with on-screen joysticks and touch buttons.
+
+## 🕹️ How to Play
+
+1. **Allow camera access.** The game uses your webcam to track your hand in real time. Nothing is recorded or stored.
+2. **Pick your courier** and start in the Training Academy to learn your first signs.
+3. **Explore the sector** and find the frozen communication relays hidden around it. Collect the cute coins you find on your way: they lead you to the Vault, where you can learn sign language.
+4. **Walk up to a relay and interact.** A guide card shows the sign's name, its meaning, and how to position your fingers.
+5. **Perform the sign** in front of your camera. A skeleton overlay shows how the game sees your hand, and a confidence bar shows how close you are.
+6. **Watch out for AI drones.** If you stay inside a drone's red scan zone for more than 5 seconds, you get kicked out of the game.
+
+Calibrate every relay in a sector to liberate it and unlock the next one.
+
+## 🎮 Controls
+
+| Action | Keyboard / Mouse | Mobile |
+| :--- | :--- | :--- |
+| Move | WASD or Arrow keys | Virtual joystick |
+| Look around | Mouse drag | Touch drag |
+| Interact / Calibrate | E | Interact button |
+| Sprint | Shift | Run toggle |
+| Perform a sign | Your hand, in front of the webcam | Your hand, in front of the camera |
+| Sign input (fallback) | Keys 1 to 6 or click a sign | Touch the sign buttons |
+| Pause | Escape | Pause button |
+
+**Tip:** play in a well-lit room and keep your whole hand inside the camera frame.
+
+## 🗺️ Why Different Sectors?
+
+Each level is a real corner of Paris taken over by the AI: the **Louvre Courtyard**, **Canal Saint-Martin**, the **Botanical Glasshouse**, the **Paris Observatory**, and finally **the Spire**, where the AI core waits.
+
+The sectors form a learning path:
+
+- **New sector, new signs.** Each one adds signs to your vocabulary.
+- **Rising difficulty.** Early relays need a single sign; later ones ask for sequences of signs, under heavier drone patrols.
+- **The final test.** At the Spire, you must combine everything you have learned to shut down NEXUS-PARIS for good.
+
+Liberate every sector and Paris sees the sun again. ☀️
 
 ---
 
-## 📖 Project Documentation
+## 🛠️ Tech
 
-Detailed project architecture, gameplay mechanics, and technical roadmaps are tracked in [`PLAN.md`](./PLAN.md).
-
-
-## Playable 3D adventure
-
-The independent Three.js game is in [`game/`](./game/README.md), alongside the existing React client and mission engine. It includes three selectable students, a safe training chapter and five playable sectors: Louvre, Canal, Glasshouse, Observatory and Spire. Each sector has sign-input terminals, exploration, hazards, collectibles, an ending and a separate browser save. First-person and third-person views, sound, restoration effects and sequential chapter unlocks connect the adventure.
-
-```bash
-cd game
-npm ci
-npm run dev
-# Open http://localhost:5173/winter.html
-```
-
-For webcam recognition, follow [`game/backend/README.md`](./game/backend/README.md) to run its separate FastAPI service on port **8100** and configure your trusted H5 model path. The 3D client proxies `/api` to that service; the existing root backend continues to use port **8000**. Run either frontend on port 5173, or choose another port when running both.
-
-The game is fully playable with keyboard inputs or mobile touch controls. Phones have a joystick, drag-to-look, action buttons, six simulated sign inputs and reduced rendering cost by default. See the [mobile and itch.io guide](./game/docs/MOBILE_ITCH.md); physical-device performance and the deployed iframe still require testing. Camera classification uses the supplied six-class model experimentally; label order and real-hand accuracy remain unverified. Gemini and Gradium need valid provider credentials for live use. See the [player guide](./game/docs/PLAYER_FLOW.md) and [model validation notes](./game/backend/MODEL_STATUS.md).
-
-```bash
-cd game
-npm test
-npm run build
-npm run package:winter
-```
-
-
-## Root game and camera startup
-
-The current root game also runs with `npm ci` and `npm run dev` from the repository root. Open `http://127.0.0.1:5173/`. Its ASL reference images, subtitled intro, Enter interaction and reset flow remain available; the separately maintained `game/` version above is also preserved.
-
-Both camera controllers request permission immediately and show a live preview before loading recognition. If recognition fails, the preview stays visible with a specific error and retry action. Closing a pending camera request releases retry controls.
-
-For the root game's sign model service, install `backend/requirements-model.txt`, configure `LEARNSIGN_MODEL_PATH` in local `backend/.env`, and run:
-
-```sh
-backend/.venv/bin/python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8100
-```
-
-The port **8000** task engine above is a different service. Static itch.io uploads need a separately hosted HTTPS recognition backend configured with `VITE_API_URL`; pushing source code alone does not deploy that backend. Camera label mapping and real-hand accuracy remain unverified.
+React + Vite + TypeScript frontend with three.js for the 3D world, Python FastAPI backend, and Google MediaPipe for real-time hand tracking and gesture recognition.
