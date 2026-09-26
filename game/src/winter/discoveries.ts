@@ -21,7 +21,7 @@ export const MEMORY_SPARKS: readonly { id: number; title: string; text: string; 
   MEMORIES.map(({ id, title, text, x, z }) => Object.freeze({ id, title, text, position: Object.freeze([x, z] as [number, number]) })),
 );
 
-export function createDiscoveries(scene: THREE.Scene): {
+export function createDiscoveries(scene: THREE.Scene, layout = MEMORY_SPARKS): {
   group: THREE.Group;
   update(time: number, position: THREE.Vector3, enabled: boolean, reduced: boolean): { id: number; title: string; text: string } | null;
   reset(collected: readonly number[]): void;
@@ -29,7 +29,8 @@ export function createDiscoveries(scene: THREE.Scene): {
   celebrate(position: THREE.Vector3, color?: number): void;
   dispose(): void;
 } {
-  const group = new THREE.Group(); group.name = 'Noor’s scattered memories'; scene.add(group);
+  const memories = layout.map(item => ({ ...item, x: item.position[0], z: item.position[1] }));
+  const group = new THREE.Group(); group.name = 'Student’s scattered memories'; scene.add(group);
   const found = new Set<number>();
   const crystalGeometry = new THREE.OctahedronGeometry(.21, 0);
   const cageGeometry = new THREE.TorusGeometry(.33, .012, 5, 36);
@@ -37,7 +38,7 @@ export function createDiscoveries(scene: THREE.Scene): {
   const crystalMaterial = new THREE.MeshStandardMaterial({ color: 0xffe4a8, emissive: 0xffc578, emissiveIntensity: 1.65, roughness: .23, metalness: .25 });
   const cageMaterial = new THREE.MeshStandardMaterial({ color: 0xdab68b, emissive: 0xc58452, emissiveIntensity: .62, roughness: .4, metalness: .7 });
   const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xeebd80, transparent: true, opacity: .42, side: THREE.DoubleSide, depthWrite: false });
-  const tokens = MEMORIES.map(memory => {
+  const tokens = memories.map(memory => {
     const token = new THREE.Group(); token.position.set(memory.x, 0, memory.z); token.name = memory.title; group.add(token);
     const crystal = new THREE.Mesh(crystalGeometry, crystalMaterial); crystal.scale.set(.7, 1.5, .7); crystal.position.y = 1.12; token.add(crystal);
     const cage = new THREE.Mesh(cageGeometry, cageMaterial); cage.position.y = 1.12; cage.rotation.x = .35; token.add(cage);
@@ -81,7 +82,7 @@ export function createDiscoveries(scene: THREE.Scene): {
   }
   function reset(collected: readonly number[]) {
     if (disposed) return;
-    found.clear(); collected.forEach(id => { if (Number.isInteger(id) && id >= 0 && id < MEMORIES.length) found.add(id); });
+    found.clear(); collected.forEach(id => { if (Number.isInteger(id) && id >= 0 && id < memories.length) found.add(id); });
     tokens.forEach((token, id) => { token.token.visible = !found.has(id); });
     remaining.fill(0); alphas.fill(0); particlesGeometry.attributes.sparkAlpha.needsUpdate = true; previousTime = null;
   }
@@ -108,7 +109,7 @@ export function createDiscoveries(scene: THREE.Scene): {
       }
       particlesGeometry.attributes.position.needsUpdate = true; particlesGeometry.attributes.sparkAlpha.needsUpdate = true;
       if (!enabled) return null;
-      for (const memory of MEMORIES) {
+      for (const memory of memories) {
         if (!found.has(memory.id) && Math.hypot(position.x - memory.x, position.z - memory.z) <= 1.2) {
           found.add(memory.id); tokens[memory.id].token.visible = false;
           celebrate(new THREE.Vector3(memory.x, .2, memory.z));

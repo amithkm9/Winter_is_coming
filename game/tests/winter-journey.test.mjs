@@ -74,20 +74,33 @@ test('fresh map launches academy and rejects Louvre until training is complete',
   f.click('launch-chapter'); assert.deepEqual(f.launched, ['academy', 'louvre']);
 });
 
-test('four planned chapters can be inspected but cannot be launched', t => {
-  const f = fixture(t); f.campaign.completeChapter('academy'); f.campaign.completeChapter('louvre'); f.journey.showMap();
-  for (const chapter of CHAPTERS.filter(c => !c.playable)) {
+test('later chapters can be inspected but launch callbacks cannot bypass locked prerequisites', t => {
+  const f = fixture(t); f.journey.showMap();
+  for (const chapter of CHAPTERS.slice(2)) {
     f.click(`chapter-${chapter.id}`);
     assert.equal(f.el('detail-title').textContent, chapter.title); assert.equal(f.el('launch-chapter').disabled, true);
-    assert.match(f.el('detail-availability').textContent, /not built yet/);
+    assert.match(f.el('launch-chapter').textContent, /COMPLETE/);
     // Even direct callback invocation cannot bypass the current campaign status.
     f.el('launch-chapter').onclick(new f.window.MouseEvent('click'));
     assert.deepEqual(f.launched, []);
   }
 });
 
+test('the map defaults to the next available chapter and launches each distinct chapter ID', t => {
+  const f = fixture(t);
+  for (const chapter of CHAPTERS) {
+    f.journey.showMap();
+    assert.equal(f.el('detail-title').textContent, chapter.title);
+    assert.equal(f.el('launch-chapter').disabled, false);
+    f.click('launch-chapter'); assert.equal(f.launched.at(-1), chapter.id);
+    assert.equal(f.campaign.completeChapter(chapter.id), true);
+  }
+  f.journey.showMap(); assert.equal(f.el('detail-title').textContent, CHAPTERS.at(-1).title);
+});
+
 test('an explicitly skipped tutorial unlocks Louvre without displaying a fabricated academy completion', t => {
-  const f = fixture(t); f.campaign.skipTutorial(); f.journey.showMap('louvre');
+  const f = fixture(t); f.campaign.skipTutorial(); f.journey.showMap();
+  assert.match(f.el('detail-title').textContent, /Louvre/);
   assert.equal(f.el('launch-chapter').disabled, false);
   assert.match(f.el('chapter-academy').textContent, /READY TO PLAY/); assert.doesNotMatch(f.el('chapter-academy').textContent, /COMPLETED/);
   f.click('launch-chapter'); assert.deepEqual(f.launched, ['louvre']); assert.equal(f.campaign.state.tutorialComplete, false);

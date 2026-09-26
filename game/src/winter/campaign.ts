@@ -16,32 +16,32 @@ export interface ChapterMetadata {
   readonly position: readonly [number, number];
 }
 
-/** Planned chapters are visible aspirations, never presented as playable content. */
+/** Six playable chapters, with field operations unlocked in campaign order. */
 export const CHAPTERS: readonly ChapterMetadata[] = Object.freeze(([
   { id: 'academy', number: '00', title: 'The First Spark', subtitle: 'Resistance academy · Safe courtyard simulation',
-    description: 'Begin in a safe training simulation of the Louvre courtyard. Learn to move, look around, and rehearse fictional A/B/C cipher inputs without drone danger.',
+    description: 'Begin in a safe training simulation of the Louvre courtyard. Learn to move, look around, and rehearse the fictional A cipher input without danger.',
     objective: 'Complete the guided introduction and practise the relay inputs.', mechanic: 'Guided movement and safe cipher rehearsal',
     reward: 'Resistance field access · Unlock the Louvre operation', playable: true, position: [14, 76] },
   { id: 'louvre', number: '01', title: 'The Louvre Relay', subtitle: 'Cour Napoléon · First field operation',
     description: 'Cross the frozen courtyard, avoid surveillance scans, and reconnect three optical relays. Find scattered memories and restore warmth to the first sector.',
     objective: 'Restore three relays and activate the central core.', mechanic: 'Exploration, drone avoidance and relay sequences',
-    reward: 'The Louvre restored · First foothold for the resistance', playable: true, position: [32, 57] },
-  { id: 'canal', number: '02', title: 'Under the Ice', subtitle: 'Canal Saint-Martin · Planned chapter',
-    description: 'A future journey along frozen locks and abandoned waterside workshops. Redirect the canal’s energy without waking its sleeping sentries.',
-    objective: 'Reconnect the lock gates and reopen a passage through the canal.', mechanic: 'Timed routes and linked environmental mechanisms',
-    reward: 'Planned: a passage to the eastern resistance cells', playable: false, position: [53, 67] },
-  { id: 'glasshouse', number: '03', title: 'A Place to Grow', subtitle: 'Botanical glasshouse · Planned chapter',
-    description: 'A future sanctuary shelters the last living garden beneath frost-covered glass. Restore its warmth and carry light between the growing chambers.',
-    objective: 'Restore the greenhouse circuits and protect the seed archive.', mechanic: 'Light-routing puzzles and environmental restoration',
-    reward: 'Planned: a living garden and the resistance seed archive', playable: false, position: [69, 45] },
-  { id: 'observatory', number: '04', title: 'Beyond the Clouds', subtitle: 'Paris observatory · Planned chapter',
-    description: 'A future climb reaches an observatory above the city’s signal fog. Align its instruments to reveal a route through the surveillance network.',
-    objective: 'Align the observation instruments and chart the final approach.', mechanic: 'Spatial alignment and constellation sequences',
-    reward: 'Planned: a clear route to the central signal spire', playable: false, position: [49, 27] },
-  { id: 'spire', number: '05', title: 'The Returning Dawn', subtitle: 'NEXUS signal spire · Planned finale',
-    description: 'A future finale brings the resistance to the machine’s highest tower. Combine the abilities learned across the city to break the artificial winter.',
-    objective: 'Reach the central array and return control of the grid to Paris.', mechanic: 'Combined traversal, environmental puzzles and final relay orchestration',
-    reward: 'Planned: the end of the artificial winter', playable: false, position: [82, 15] },
+    reward: 'The Louvre restored · Unlock Under the Ice', playable: true, position: [32, 57] },
+  { id: 'canal', number: '02', title: 'Under the Ice', subtitle: 'Canal Saint-Martin · Frozen lock gates',
+    description: 'Cross a frozen canal and reopen its three lock gates. Number ciphers introduce a new set of inputs while each restored relay opens the route ahead.',
+    objective: 'Restore the lock gates in order and restart the canal pump.', mechanic: 'Number ciphers 1 / 2 / 3, hazard avoidance and sequential gates',
+    reward: 'The canal restored · Unlock A Place to Grow', playable: true, position: [53, 67] },
+  { id: 'glasshouse', number: '03', title: 'A Place to Grow', subtitle: 'Botanical glasshouse · Growing chambers',
+    description: 'Enter a frost-covered sanctuary and restore its growing chambers. Letter and number inputs share the same sequences as you work towards the heating core.',
+    objective: 'Restore three chambers in order and warm the seed archive.', mechanic: 'Mixed letter/number ciphers and chamber gates',
+    reward: 'The garden restored · Unlock Beyond the Clouds', playable: true, position: [69, 45] },
+  { id: 'observatory', number: '04', title: 'Beyond the Clouds', subtitle: 'Paris observatory · Signal instruments',
+    description: 'Reconnect the observatory above the city’s signal fog. Longer sequences protect its three instruments and the path to the sky beacon.',
+    objective: 'Reconnect three observation relays in order and light the sky beacon.', mechanic: 'Longer mixed sequences and instrument access gates',
+    reward: 'The sky beacon restored · Unlock The Returning Dawn', playable: true, position: [49, 27] },
+  { id: 'spire', number: '05', title: 'The Returning Dawn', subtitle: 'NEXUS signal spire · Campaign finale',
+    description: 'Enter the final signal array. Bring together all six inputs and break its three locks to return control of the grid to Paris.',
+    objective: 'Break three signal locks in order and activate the central array.', mechanic: 'Combined ciphers culminating in a five-input final sequence',
+    reward: 'Paris restored · Complete the resistance journey', playable: true, position: [82, 15] },
 ] satisfies ChapterMetadata[]).map(chapter => Object.freeze({ ...chapter, position: Object.freeze([...chapter.position] as [number, number]) })));
 
 export interface WinterCampaignState {
@@ -75,13 +75,15 @@ export class WinterCampaign {
     if (!metadata.playable) return 'planned';
     if (this.completed.includes(id)) return 'completed';
     if (id === 'academy' || (id === 'louvre' && (this.completed.includes('academy') || this.tutorialSkipped))) return 'available';
+    const index = CHAPTERS.findIndex(item => item.id === id);
+    if (index > 1 && this.completed.includes(CHAPTERS[index - 1].id)) return 'available';
     return 'locked';
   }
 
   completeChapter(id: ChapterId): boolean {
     if (this.status(id) !== 'available') return false;
     this.completed.push(id);
-    this.completed.sort((a, b) => (a === 'academy' ? 0 : 1) - (b === 'academy' ? 0 : 1));
+    this.completed.sort((a, b) => CHAPTERS.findIndex(chapter => chapter.id === a) - CHAPTERS.findIndex(chapter => chapter.id === b));
     if (id === 'academy') this.tutorialSkipped = false;
     return true;
   }
@@ -102,13 +104,12 @@ export class WinterCampaign {
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
       const saved = parsed as Record<string, unknown>;
       if (saved.version !== 1 || saved.profile !== 'winter-campaign' || !CHARACTER_IDS.has(saved.character)) return false;
-      if (!Array.isArray(saved.completed) || saved.completed.length > 2 || new Set(saved.completed).size !== saved.completed.length) return false;
+      if (!Array.isArray(saved.completed) || saved.completed.length > CHAPTERS.length || new Set(saved.completed).size !== saved.completed.length) return false;
       const tutorialSkipped = saved.tutorialSkipped === undefined ? false : saved.tutorialSkipped;
       if (typeof tutorialSkipped !== 'boolean') return false;
       // A real skip unlocks field access without pretending the training was completed.
-      if (saved.completed.some(id => id !== 'academy' && id !== 'louvre')) return false;
-      if (saved.completed.length === 2 && (saved.completed[0] !== 'academy' || saved.completed[1] !== 'louvre')) return false;
-      if (saved.completed.includes('louvre') && !saved.completed.includes('academy') && !tutorialSkipped) return false;
+      const expected = CHAPTERS.filter(chapter => !tutorialSkipped || chapter.id !== 'academy').map(chapter => chapter.id);
+      if (saved.completed.some((id, index) => id !== expected[index])) return false;
       if (typeof saved.tutorialComplete !== 'boolean' || saved.tutorialComplete !== saved.completed.includes('academy')) return false;
       if (saved.tutorialComplete && tutorialSkipped) return false;
       this.character = saved.character as CharacterId;

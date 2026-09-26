@@ -1,3 +1,4 @@
+import { LEVELS, isMissionChapter, type MissionChapter, type LevelConfig } from './levels.ts';
 /** Deterministic mission rules. Proximity, visuals, input capture and provider APIs live outside this class. */
 export type WinterPhase = 'briefing' | 'explore' | 'terminal' | 'liberating' | 'complete';
 export type WinterSign = 'A' | 'B' | 'C' | '1' | '2' | '3';
@@ -5,6 +6,7 @@ export type WinterInputSource = 'keyboard' | 'camera';
 export type RelayId = 0 | 1 | 2;
 
 export interface WinterMissionState {
+  readonly chapter: MissionChapter;
   readonly phase: WinterPhase;
   readonly completed: readonly RelayId[];
   readonly activeRelay: RelayId | null;
@@ -19,44 +21,53 @@ export interface WinterMissionState {
   readonly lastSource: WinterInputSource | null;
 }
 
-export const RELAY_SEQUENCES: Readonly<Record<RelayId, readonly WinterSign[]>> = Object.freeze({
-  0: Object.freeze(['A'] as WinterSign[]),
-  1: Object.freeze(['B', 'C'] as WinterSign[]),
-  2: Object.freeze(['A', 'C', 'B'] as WinterSign[]),
-});
+export const RELAY_SEQUENCES = LEVELS.louvre.sequences;
 export const LIBERATION_SECONDS = 8;
 const SIGNS = new Set<string>(['A', 'B', 'C', '1', '2', '3']);
 const isRelay = (id: unknown): id is RelayId => Number.isInteger(id) && (id === 0 || id === 1 || id === 2);
 const counter = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 0;
 
-function initial(): WinterMissionState {
-  return { phase: 'briefing', completed: [], activeRelay: null, sequence: [], step: 0,
+function initial(config: LevelConfig): WinterMissionState {
+  return { chapter: config.id, phase: 'briefing', completed: [], activeRelay: null, sequence: [], step: 0,
     alert: 0, elapsed: 0, mistakes: 0, liberation: 0, respawns: 0, lastSource: null,
-    message: 'Three relays hold the Louvre in artificial winter. Reach them. Break the cipher. Restore the light.' };
+    message: config.arrival };
 }
 
 /** Inputs are game ciphers. A keyboard event never claims verified sign-language recognition. */
 export class WinterMission {
-  private current: WinterMissionState = initial();
+  private current: WinterMissionState;
+  private readonly config: LevelConfig;
+
+  constructor(chapter: MissionChapter = 'louvre') {
+    if (!isMissionChapter(chapter)) throw new TypeError('Unknown mission chapter.');
+    this.config = LEVELS[chapter]; this.current = initial(this.config);
+  }
+
+  get chapter(): MissionChapter { return this.config.id; }
 
   get state(): WinterMissionState {
     return Object.freeze({ ...this.current, completed: Object.freeze([...this.current.completed]), sequence: Object.freeze([...this.current.sequence]) });
   }
 
-  reset(): boolean { this.current = initial(); return true; }
+  reset(): boolean { this.current = initial(this.config); return true; }
 
   start(): boolean {
     if (this.current.phase !== 'briefing') return false;
-    this.current = { ...this.current, phase: 'explore', message: 'Find the three resistance relays. Stay outside the drone’s scan.' };
+    this.current = { ...this.current, phase: 'explore', message: this.config.arrival };
     return true;
   }
 
+  canEnterRelay(id: number): boolean {
+    return isRelay(id) && ['explore', 'terminal'].includes(this.current.phase) && !this.current.completed.includes(id)
+      && (!this.config.ordered || id === this.current.completed.length);
+  }
+
   enterRelay(id: number): boolean {
-    if (!isRelay(id) || !['explore', 'terminal'].includes(this.current.phase) || this.current.completed.includes(id)) return false;
+    if (!isRelay(id) || !this.canEnterRelay(id)) return false;
     if (this.current.activeRelay === id) return true;
-    this.current = { ...this.current, phase: 'terminal', activeRelay: id, sequence: RELAY_SEQUENCES[id], step: 0,
-      message: `Relay ${id + 1} linked. Enter cipher ${RELAY_SEQUENCES[id].join(' → ')}.` };
+    this.current = { ...this.current, phase: 'terminal', activeRelay: id, sequence: this.config.sequences[id], step: 0,
+      message: `Relay ${id + 1} linked. Enter cipher ${this.config.sequences[id].join(' → ')}.` };
     return true;
   }
 
@@ -82,7 +93,8 @@ export class WinterMission {
     const id = this.current.activeRelay;
     const completed = [...this.current.completed, id];
     this.current = { ...this.current, completed, phase: 'explore', activeRelay: null, sequence: [], step: 0, lastSource: source,
-      message: completed.length === 3 ? 'All three relays are free. Reach the central core and restore the Louvre.' : `Relay ${id + 1} liberated. ${3 - completed.length} remaining.` };
+      message: completed.length === 3 ? `All three relays are free. Reach the ${this.config.coreName} and restore power.`
+        : this.config.ordered ? `Relay ${id + 1} restored. The path opens to relay ${completed.length + 1}.` : `Relay ${id + 1} liberated. ${3 - completed.length} remaining.` };
     return true;
   }
 
@@ -94,7 +106,7 @@ export class WinterMission {
     if (this.current.phase === 'liberating') {
       const liberation = Math.min(1, this.current.liberation + dtSeconds / LIBERATION_SECONDS);
       this.current = { ...this.current, elapsed, liberation, phase: liberation === 1 ? 'complete' : 'liberating',
-        message: liberation === 1 ? 'THE LOUVRE IS FREE. Winter is breaking. Paris has a future.' : 'Resistance signal spreading. The ice is losing its hold.' };
+        message: liberation === 1 ? this.config.completion : 'Resistance signal spreading. The ice is losing its hold.' };
       return this.state;
     }
     const exposureRate = this.current.phase === 'terminal' ? 10 : 20;
@@ -114,7 +126,7 @@ export class WinterMission {
 
   serialize(): string {
     // A partial terminal cipher is intentionally discarded on resume; completed relay progress is retained.
-    return JSON.stringify({ version: 1, mission: 'louvre-three-relays', phase: this.current.phase === 'terminal' ? 'explore' : this.current.phase,
+    return JSON.stringify({ version: 1, chapter: this.chapter, mission: `${this.chapter}-three-relays`, phase: this.current.phase === 'terminal' ? 'explore' : this.current.phase,
       completed: [...this.current.completed], alert: this.current.alert, elapsed: this.current.elapsed,
       mistakes: this.current.mistakes, liberation: this.current.liberation, respawns: this.current.respawns, lastSource: this.current.lastSource });
   }
@@ -124,8 +136,10 @@ export class WinterMission {
       const saved: unknown = JSON.parse(raw);
       if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return false;
       const s = saved as Record<string, unknown>;
-      if (s.version !== 1 || s.mission !== 'louvre-three-relays' || !['briefing', 'explore', 'liberating', 'complete'].includes(String(s.phase))) return false;
+      if (s.version !== 1 || s.mission !== `${this.chapter}-three-relays` || !['briefing', 'explore', 'liberating', 'complete'].includes(String(s.phase))) return false;
+      if (s.chapter !== this.chapter && !(s.chapter === undefined && this.chapter === 'louvre')) return false;
       if (!Array.isArray(s.completed) || s.completed.length > 3 || s.completed.some(id => !isRelay(id)) || new Set(s.completed).size !== s.completed.length) return false;
+      if (this.config.ordered && s.completed.some((id, index) => id !== index)) return false;
       if (!finite(s.alert) || s.alert >= 100 || !finite(s.elapsed) || !finite(s.liberation) || s.liberation > 1 || !counter(s.mistakes) || !counter(s.respawns)) return false;
       if (s.lastSource !== null && s.lastSource !== 'keyboard' && s.lastSource !== 'camera') return false;
       if ((s.phase === 'liberating' || s.phase === 'complete') && s.completed.length !== 3) return false;
@@ -133,10 +147,11 @@ export class WinterMission {
       if (s.phase === 'liberating' && (s.liberation >= 1 || s.alert !== 0)) return false;
       if ((s.phase === 'briefing' || s.phase === 'explore') && s.liberation !== 0) return false;
       if (s.phase === 'briefing' && (s.completed.length || s.elapsed || s.mistakes || s.respawns || s.alert || s.lastSource !== null)) return false;
-      this.current = { phase: s.phase as WinterPhase, completed: [...s.completed] as RelayId[], activeRelay: null, sequence: [], step: 0,
+      this.current = { chapter: this.chapter, phase: s.phase as WinterPhase, completed: [...s.completed] as RelayId[], activeRelay: null, sequence: [], step: 0,
         alert: s.alert, elapsed: s.elapsed, mistakes: s.mistakes, liberation: s.liberation, respawns: s.respawns,
         lastSource: s.lastSource as WinterInputSource | null,
-        message: s.phase === 'complete' ? 'THE LOUVRE IS FREE. Your resistance signal endures.' : s.phase === 'liberating' ? 'Resistance signal spreading. The ice is losing its hold.' : 'Resistance uplink restored. Completed relays are safe.' };
+        message: s.phase === 'complete' ? this.config.completion : s.phase === 'liberating' ? 'Resistance signal spreading. The ice is losing its hold.'
+          : this.config.ordered && s.completed.length < 3 ? `Resistance uplink restored. Continue at relay ${s.completed.length + 1}.` : 'Resistance uplink restored. Completed relays are safe.' };
       return true;
     } catch { return false; }
   }

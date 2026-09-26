@@ -42,7 +42,7 @@ Detailed project architecture, gameplay mechanics, and technical roadmaps are tr
 
 ## Playable 3D adventure
 
-The independent Three.js game is in [`game/`](./game/README.md), alongside the existing React client and mission engine. It includes three selectable students, a safe training chapter, the playable Louvre mission, first-person and third-person views, sign-input terminals, sound, collectibles and browser saves. Chapters 2–5 are planned, not implemented in this PR.
+The independent Three.js game is in [`game/`](./game/README.md), alongside the existing React client and mission engine. It includes three selectable students, a safe training chapter and five playable sectors: Louvre, Canal, Glasshouse, Observatory and Spire. Each sector has sign-input terminals, exploration, hazards, collectibles, an ending and a separate browser save. First-person and third-person views, sound, restoration effects and sequential chapter unlocks connect the adventure.
 
 ```bash
 cd game
@@ -53,7 +53,7 @@ npm run dev
 
 For webcam recognition, follow [`game/backend/README.md`](./game/backend/README.md) to run its separate FastAPI service on port **8100** and configure your trusted H5 model path. The 3D client proxies `/api` to that service; the existing root backend continues to use port **8000**. Run either frontend on port 5173, or choose another port when running both.
 
-The game is fully playable with keyboard inputs. Camera classification uses the supplied six-class model experimentally; label order and real-hand accuracy remain unverified. Gemini and Gradium need valid provider credentials for live use. See the [player guide](./game/docs/PLAYER_FLOW.md) and [model validation notes](./game/backend/MODEL_STATUS.md).
+The game is fully playable with keyboard inputs or mobile touch controls. Phones have a joystick, drag-to-look, action buttons, six simulated sign inputs and reduced rendering cost by default. See the [mobile and itch.io guide](./game/docs/MOBILE_ITCH.md); physical-device performance and the deployed iframe still require testing. Camera classification uses the supplied six-class model experimentally; label order and real-hand accuracy remain unverified. Gemini and Gradium need valid provider credentials for live use. See the [player guide](./game/docs/PLAYER_FLOW.md) and [model validation notes](./game/backend/MODEL_STATUS.md).
 
 ```bash
 cd game

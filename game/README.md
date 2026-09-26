@@ -14,13 +14,13 @@ This local setup still needs the Python backend running on port 8100. The static
 
 The First Spark is a safe training simulation in the existing courtyard, not a second unique environment. Walk four meters, approach the green beacon, press **E**, then rehearse **A** with a keyboard input or experimental camera label. Completing it unlocks the Louvre. The pause menu also lets you skip training without awarding completion. Tutorial replay preserves real mission saves and collectible progress. Existing valid Louvre saves retain access without a fabricated tutorial completion.
 
-The map plans six chapters: **The First Spark**, **The Louvre Relay**, **Under the Ice**, **A Place to Grow**, **Beyond the Clouds**, and **The Returning Dawn**. Only training and Louvre can launch. The four future chapters have separate gameplay designs and visibly disabled launch controls.
+The map connects six chapters: **The First Spark**, **The Louvre Relay**, **Under the Ice**, **A Place to Grow**, **Beyond the Clouds**, and **The Returning Dawn**. Training and all five missions are implemented. Chapters unlock sequentially; each new sector has its own 3D environment, three ordered mechanisms, warning zones, memories and restoration ending.
 
 Read the complete [game design](docs/GAME_DESIGN.md) and [prioritized build checklist](docs/BUILD_ROADMAP.md). Profile state is separate under `winter-campaign-v1`; mission state remains under `winter-louvre-v1`. No existing save is cleared by choosing a character or replaying training.
 
 Open **http://127.0.0.1:5173/winter.html** after `npm run dev`. The separate Three.js entry implements the frozen-Paris concept from the supplied `PLAN.md`. The original 2D adventure remains at `/` and `/forest.html`; its save is separate.
 
-Sector 01 is a stylized Louvre courtyard with palace architecture, a glass pyramid, moving drones and visible scanner cones, an animated student, snow, shadows, bloom and film grading. A ten-second, three-shot opening leads into play. Restore three local optical relays, return to the pyramid core, and trigger an eight-second lighting/restoration sequence. It is one playable mission plus a safe onboarding simulation. The six-chapter design supersedes the earlier sixteen-sector outline.
+Sector 01 is a stylized Louvre courtyard with palace architecture, a glass pyramid, moving drones and visible scanner cones, an animated student, snow, shadows, bloom and film grading. A ten-second, three-shot opening leads into play. Restore three local optical relays, return to the pyramid core, and trigger an eight-second lighting/restoration sequence. It is followed by the Canal, Glasshouse, Observatory and Spire missions, with chapter-specific saves and a final campaign ending. The six-chapter design supersedes the earlier sixteen-sector outline.
 
 | Input | Winter action |
 | --- | --- |
@@ -30,6 +30,8 @@ Sector 01 is a stylized Louvre courtyard with palace architecture, a glass pyram
 | E | Access a nearby relay / leave it / activate the unlocked core |
 | A / B / C | Enter the displayed cipher while using a terminal |
 | Escape | Leave terminal / pause |
+
+On touch devices, a left joystick moves the student; drag the world to look and use large **INTERACT**, **RUN**, **VIEW** and **PAUSE** controls. Six explicit terminal buttons provide simulated A/B/C/1/2/3 input. Phone layouts accommodate portrait/landscape safe areas; performance mode defaults on, disabling shadows and postprocessing while reducing particles. See [mobile and itch.io setup](docs/MOBILE_ITCH.md). Actual device performance and camera permission inside the deployed iframe remain manual checks.
 
 Press **V** or the HUD **VIEW** button to switch between third-person and a steady first-person camera at the student's eye height. Drag up/down to look vertically in eye view; left/right turns in both views. The choice persists, while story cinematics retain their directed shots.
 
@@ -83,7 +85,7 @@ Open **http://127.0.0.1:5173/**. Click **Begin your adventure**, watch or skip t
 | Q | Toggle slow-motion casting focus |
 | Escape | Pause / resume |
 
-The HUD power buttons also cast unlocked powers. Keys 1/2/3 are recognized by the input system but their powers belong to the future island chapter and cannot be unlocked in the forest. The game is designed for a keyboard-equipped desktop/laptop; touch gameplay and controller support are not implemented.
+The HUD power buttons also cast unlocked powers. Keys 1/2/3 are recognized by the input system but their powers belong to the future island chapter and cannot be unlocked in the forest. The separate forest prototype remains designed for keyboard-equipped computers. The 3D Winter game supports touch controls; gamepad support is not implemented.
 
 ## Forest walkthrough
 
@@ -118,7 +120,7 @@ Current local verification: the inherited Gemini credential was rejected with HT
 
 ## Experimental webcam recognition
 
-Use the camera button in the HUD to read the data notice and explicitly enable the camera. Browser MediaPipe tracks one hand and supplies 30 frames of 21 XYZ landmarks. Only those coordinates are sent to the Python service; this client does not upload camera images. Tracking resources load from jsDelivr and Google's model storage on first use.
+Use the camera button in the HUD to read the data notice and explicitly enable the camera. Browser MediaPipe tracks one hand and supplies 30 frames of 21 XYZ landmarks. Only those coordinates are sent to the Python service; this client does not upload camera images. Tracking resources are bundled under `public/mediapipe/` and load from the same host as the game.
 
 The backend applies the archived wrist-centering/max-absolute normalization and runs the supplied H5 model. The model is not bundled into the public client. Set `LEARNSIGN_MODEL_PATH` to your own copy and install `backend/requirements-model.txt` in the compatible environment.
 

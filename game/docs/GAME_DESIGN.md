@@ -1,6 +1,6 @@
 # Winter is Coming — game design and complete player journey
 
-This is the production design for the next version of the existing browser game. The current foundation is the playable 3D Louvre courtyard. Chapter 00, three-character selection and the chapter map are implemented and covered by automated state/component checks. Full browser walkthrough and visual acceptance remain required. Chapters 02–05 are planned, not playable. See [BUILD_ROADMAP.md](BUILD_ROADMAP.md) for delivery gates.
+This is the production design for the next version of the existing browser game. The current foundation is the playable 3D Louvre courtyard. Chapter 00, three-character selection and the chapter map are implemented and covered by automated state/component checks. Full browser walkthrough and visual acceptance remain required. Chapters 02–05 now have playable prototype environments and progression; their advanced production mechanics below remain future polish. See [BUILD_ROADMAP.md](BUILD_ROADMAP.md) for delivery gates.
 
 ## Player promise
 
@@ -52,12 +52,12 @@ These are pacing targets for first-time playtesting, not mandatory timers. If a 
 |---|---|---|---|
 | **00 · The First Spark** | Safe onboarding in the existing courtyard: move four metres → **E** near the practice beacon → rehearse **A** | Learn navigation and fictional cipher input; completing all three steps earns training completion and unlocks the Louvre | In implementation this pass; verify separately from Chapter 01 |
 | **01 · The Louvre Relay** | Navigate the courtyard, avoid drone scan areas, bypass three terminals and reach the central core | Sequences `A`, `B → C`, `A → C → B`; **E** at the ready core; eight-second restoration; optional memory collectibles | Existing playable foundation; character/map integration must be rechecked |
-| **02 · Under the Ice** | Explore canal towpaths and control moving bridge segments while planning a safe route | Route selection, bridge timing and persistent shortcuts; restore passage between neighborhoods | Planned |
-| **03 · A Place to Grow** | Redirect light through a damaged glasshouse to grow pathways and uncover rooms | Spatial light puzzles, growth as a state change, revisiting a previously blocked path | Planned |
-| **04 · Beyond the Clouds** | Rotate observatory reflectors and align constellations while traversing several platforms | Combine previously learned interactions across space; activate the city's navigation beacon | Planned |
-| **05 · The Returning Dawn** | Ascend the NEXUS spire, disable its defenses, reroute power and complete a multi-phase finale | Movement, environmental strategy and interaction combinations; restore Paris and revisit completed places | Planned |
+| **02 · Under the Ice** | Explore canal towpaths and control moving bridge segments while planning a safe route | Route selection, bridge timing and persistent shortcuts; restore passage between neighborhoods | Playable prototype; advanced interaction planned |
+| **03 · A Place to Grow** | Redirect light through a damaged glasshouse to grow pathways and uncover rooms | Spatial light puzzles, growth as a state change, revisiting a previously blocked path | Playable prototype; advanced interaction planned |
+| **04 · Beyond the Clouds** | Rotate observatory reflectors and align constellations while traversing several platforms | Combine previously learned interactions across space; activate the city's navigation beacon | Playable prototype; advanced interaction planned |
+| **05 · The Returning Dawn** | Ascend the NEXUS spire, disable its defenses, reroute power and complete a multi-phase finale | Movement, environmental strategy and interaction combinations; restore Paris and revisit completed places | Playable prototype; advanced interaction planned |
 
-Chapter numbers are campaign order, not Paris arrondissement numbers. The revised six-chapter campaign replaces the earlier 16-sector presentation as the product plan. Future locations need distinct navigable spaces and mechanics before their map nodes become playable.
+Chapter numbers are campaign order, not Paris arrondissement numbers. The revised six-chapter campaign replaces the earlier 16-sector presentation as the product plan. Each mission now has distinct geometry, route barriers and restoration effects; advanced navigation and spatial-puzzle features remain production targets.
 
 ## Interaction, practice and sign-language scope
 

@@ -10,7 +10,7 @@ export interface WinterPracticeState {
   readonly lastSource: PracticeInputSource | null;
 }
 
-const CIPHERS = new Set(['A', 'B', 'C']);
+const CIPHERS = new Set(['A', 'B', 'C', '1', '2', '3']);
 const idle = (): WinterPracticeState => ({ active: false, sequence: [], step: 0, complete: false,
   message: 'Choose a relay cipher to rehearse. Practice does not restore relays.', lastSource: null });
 
@@ -23,7 +23,7 @@ export class WinterPractice {
 
   begin(sequence: readonly string[]): void {
     if (!Array.isArray(sequence) || sequence.length === 0 || Array.from(sequence).some(sign => typeof sign !== 'string' || !CIPHERS.has(sign))) {
-      this.current = { ...idle(), message: 'No supported cipher sequence is available. Rehearsal uses A, B and C.' };
+      this.current = { ...idle(), message: 'No supported cipher sequence is available. Rehearsal uses A, B, C, 1, 2 and 3.' };
       return;
     }
     this.current = { active: true, sequence: [...sequence], step: 0, complete: false, lastSource: null,
@@ -33,7 +33,7 @@ export class WinterPractice {
   submit(sign: string, source: PracticeInputSource): boolean {
     if (!this.current.active || this.current.complete || !CIPHERS.has(sign) || (source !== 'keyboard' && source !== 'camera')) return false;
     const expected = this.current.sequence[this.current.step];
-    const label = source === 'keyboard' ? 'Keyboard input' : 'Experimental model input';
+    const label = source === 'keyboard' ? 'Simulated input' : 'Experimental model input';
     if (sign !== expected) {
       this.current = { ...this.current, lastSource: source,
         message: `${label} received: ${sign}. Try ${expected} again; your practice progress is kept.` };

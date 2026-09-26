@@ -58,7 +58,7 @@ export function createJourneyUI(parent: HTMLElement, campaign: WinterCampaign, a
 
   function showMap(preferred?: ChapterId) {
     screen = 'map'; reveal();
-    chapter = preferred ?? (campaign.state.tutorialComplete ? 'louvre' : 'academy');
+    chapter = preferred ?? CHAPTERS.find(c => campaign.status(c.id) === 'available' && (c.id !== 'academy' || !campaign.state.tutorialSkipped))?.id ?? 'spire';
     const person = getCharacter(campaign.state.character);
     const route = CHAPTERS.map(c => `${c.position[0]},${c.position[1]}`).join(' ');
     root.innerHTML = `${header('02 / CHOOSE YOUR CHAPTER')}
@@ -67,7 +67,7 @@ export function createJourneyUI(parent: HTMLElement, campaign: WinterCampaign, a
         <div class="map-coordinates">PARIS / RESISTANCE ROUTE<br>FICTIONAL SECTORS · NOT TO SCALE</div>
         <svg class="map-landscape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="map-grid" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="#bad4db" stroke-opacity=".05" stroke-width=".1"/></pattern></defs><rect width="100" height="100" fill="url(#map-grid)"/><path d="M-10 78C10 70 26 92 39 72S63 80 72 53S85 28 111 36" fill="none" stroke="#173d51" stroke-width="7"/><path d="M-10 78C10 70 26 92 39 72S63 80 72 53S85 28 111 36" fill="none" stroke="#5a8ca3" stroke-opacity=".3" stroke-width=".3"/><polyline points="${route}" fill="none" stroke="#e6bf89" stroke-opacity=".55" stroke-width=".45" stroke-dasharray="1.1 1.4"/></svg>
         ${CHAPTERS.map(c => { const status = campaign.status(c.id); return `<button class="chapter-node ${status}" id="chapter-${c.id}" style="left:${c.position[0]}%;top:${c.position[1]}%" aria-label="Chapter ${c.number}: ${c.title}, ${status}"><span class="node-medallion">${status === 'completed' ? '✓' : c.number}</span><span class="node-title">${c.title}</span><small>${status === 'planned' ? 'PLANNED' : status === 'locked' ? 'LOCKED' : status === 'completed' ? 'COMPLETED' : 'READY TO PLAY'}</small></button>`; }).join('')}
-        <div class="map-legend"><i></i> CURRENT PLAYABLE BUILD <span>✦</span> MORE CHAPTERS IN DEVELOPMENT</div></div>
+        <div class="map-legend"><i></i> SIX PLAYABLE CHAPTERS <span>✦</span> COMPLETE EACH CHAPTER TO OPEN THE NEXT</div></div>
       <aside class="chapter-detail" aria-live="polite"><div class="chapter-kicker" id="detail-number"></div><div class="chapter-emblem" id="detail-emblem" aria-hidden="true"></div><h2 id="detail-title"></h2><p class="chapter-subtitle" id="detail-subtitle"></p><p id="detail-description"></p><dl><div><dt>YOUR MISSION</dt><dd id="detail-objective"></dd></div><div><dt>WHAT YOU’LL DO</dt><dd id="detail-mechanic"></dd></div><div><dt>YOUR REWARD</dt><dd id="detail-reward"></dd></div></dl><button class="journey-primary" id="launch-chapter"></button><p class="chapter-availability" id="detail-availability"></p></aside></div>`;
     const icons: Record<ChapterId, string> = { academy: '✦', louvre: '◇', canal: '≈', glasshouse: '❋', observatory: '✧', spire: '△' };
     function select(id: ChapterId) {
@@ -75,8 +75,9 @@ export function createJourneyUI(parent: HTMLElement, campaign: WinterCampaign, a
       CHAPTERS.forEach(c => { const node = find(`chapter-${c.id}`); node.classList.toggle('selected', c.id === id); node.setAttribute('aria-pressed', String(c.id === id)); });
       for (const [key, value] of Object.entries({ number: `CHAPTER ${data.number} / ${status.toUpperCase()}`, title: data.title, subtitle: data.subtitle, description: data.description, objective: data.objective, mechanic: data.mechanic, reward: data.reward, emblem: icons[id] })) find(`detail-${key}`).textContent = value;
       const button = find<HTMLButtonElement>('launch-chapter'); button.disabled = status === 'planned' || status === 'locked';
-      button.textContent = status === 'planned' ? 'PLANNED CHAPTER' : status === 'locked' ? 'COMPLETE THE FIRST SPARK' : id === 'academy' ? 'ENTER GUIDED TRAINING →' : status === 'completed' ? 'RETURN TO THE LOUVRE →' : 'ENTER THE LOUVRE →';
-      find('detail-availability').textContent = status === 'planned' ? 'This chapter is designed for the full campaign. Its environment and mechanics are not built yet.' : status === 'locked' ? 'Finish the short, safe introduction to unlock this mission.' : id === 'academy' ? 'A safe courtyard training simulation. Camera is optional; keyboard input works throughout.' : 'Explore the current playable sector. Saved relay progress continues when available.';
+      const previous = CHAPTERS[Math.max(0, CHAPTERS.findIndex(c => c.id === id) - 1)];
+      button.textContent = status === 'planned' ? 'PLANNED CHAPTER' : status === 'locked' ? `COMPLETE ${previous.title.toUpperCase()}` : id === 'academy' ? 'ENTER GUIDED TRAINING →' : `${status === 'completed' ? 'RETURN TO' : 'ENTER'} ${data.title.toUpperCase()} →`;
+      find('detail-availability').textContent = status === 'planned' ? 'This chapter is not available in this build.' : status === 'locked' ? `Complete ${previous.title} to open this chapter.` : id === 'academy' ? 'A safe courtyard training simulation. Camera is optional; keyboard input works throughout.' : 'A playable operation with its own saved relay progress. Keyboard or experimental camera inputs can complete every cipher.';
     }
     CHAPTERS.forEach(c => find(`chapter-${c.id}`).onclick = () => select(c.id));
     find('launch-chapter').onclick = () => { const status = campaign.status(chapter); if (status !== 'available' && status !== 'completed') return; hide(); actions.launch(chapter); };

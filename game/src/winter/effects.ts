@@ -14,11 +14,15 @@ export function createEffects(renderer: THREE.WebGLRenderer, scene: THREE.Scene,
   scene.environment = environmentMap.texture;
   scene.environmentIntensity = .38;
   environment.dispose(); pmrem.dispose();
-  const composer = new EffectComposer(renderer);
+  let composer:EffectComposer|undefined,bloom:UnrealBloomPass|undefined,film:ShaderPass|undefined;
+  let lightweight=true;
+  function ensurePostProcessing(){
+    if(composer)return;
+    composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .45, .7, .75);
+    bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .45, .7, .75);
   composer.addPass(bloom); composer.addPass(new OutputPass());
-  const film = new ShaderPass({
+    film = new ShaderPass({
     uniforms: { tDiffuse: { value: null }, time: { value: 0 }, amount: { value: .025 }, liberated: { value: 0 } },
     vertexShader: `varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
     fragmentShader: `uniform sampler2D tDiffuse;uniform float time;uniform float amount;uniform float liberated;varying vec2 vUv;
@@ -28,6 +32,9 @@ export function createEffects(renderer: THREE.WebGLRenderer, scene: THREE.Scene,
       color=mix(color,color*vec3(1.05,1.01,.95),liberated*.3);gl_FragColor=vec4(color,1.0);}`,
   });
   composer.addPass(film);
+
+    composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
+  }
 
   const count = 1600;
   const positions = new Float32Array(count * 3);
@@ -44,14 +51,14 @@ export function createEffects(renderer: THREE.WebGLRenderer, scene: THREE.Scene,
   const snow = new THREE.Points(geometry,snowMaterial); snow.frustumCulled=false;scene.add(snow);
   return {
     update(time:number,liberation:number,reduced:boolean,low:boolean){
-      film.uniforms.time.value=reduced?0:time;film.uniforms.amount.value=reduced?0:.018;film.uniforms.liberated.value=liberation;
-      bloom.strength=low?0:.45+liberation*.18;bloom.enabled=!low;
+      lightweight=low;
+      if(!low){ensurePostProcessing();film!.uniforms.time.value=reduced?0:time;film!.uniforms.amount.value=reduced?0:.018;film!.uniforms.liberated.value=liberation;bloom!.strength=.45+liberation*.18;}
       snowMaterial.uniforms.time.value=reduced?0:time;snowMaterial.uniforms.opacity.value=.6*(1-liberation*.75);snow.visible=!reduced;
       geometry.setDrawRange(0,low?500:count);
     },
-    render(){composer.render();},
-    resize(width:number,height:number){composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(width,height);snowMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();},
-    dispose(){composer.dispose();bloom.dispose();film.dispose();snowMaterial.dispose();geometry.dispose();environmentMap.dispose();scene.remove(snow);},
+    render(){if(lightweight)renderer.render(scene,camera);else composer!.render();},
+    resize(width:number,height:number){composer?.setPixelRatio(renderer.getPixelRatio());composer?.setSize(width,height);snowMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();},
+    dispose(){composer?.dispose();bloom?.dispose();film?.dispose();snowMaterial.dispose();geometry.dispose();environmentMap.dispose();scene.remove(snow);},
   };
 }
 

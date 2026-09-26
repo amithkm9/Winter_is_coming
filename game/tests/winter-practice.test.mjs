@@ -29,7 +29,7 @@ test('begin replays a finished sequence and clears earlier progress and source',
 
 test('missing, empty and unsupported sequences leave rehearsal safely inactive', () => {
   const practice = new WinterPractice();
-  for (const sequence of [undefined, null, [], new Array(2), 'ABC', ['D'], ['A', '1'], ['A', null]]) {
+  for (const sequence of [undefined, null, [], new Array(2), 'ABC', ['D'], ['A', '4'], ['A', null]]) {
     practice.begin(['A']); practice.begin(sequence);
     assert.equal(practice.state.active, false); assert.deepEqual(practice.state.sequence, []);
     assert.equal(practice.submit('A', 'keyboard'), false);
@@ -38,7 +38,7 @@ test('missing, empty and unsupported sequences leave rehearsal safely inactive',
 
 test('invalid inputs and source values are ignored without mutating the current state', () => {
   const practice = new WinterPractice(); practice.begin(['A']); const before = practice.state;
-  for (const [sign, source] of [['1', 'keyboard'], ['a', 'keyboard'], ['', 'camera'], ['A', 'verified'], ['A', undefined]]) {
+  for (const [sign, source] of [['4', 'keyboard'], ['a', 'keyboard'], ['', 'camera'], ['A', 'verified'], ['A', undefined]]) {
     assert.equal(practice.submit(sign, source), false); assert.deepEqual(practice.state, before);
   }
 });
@@ -53,9 +53,15 @@ test('input sequences and snapshots are independent and immutable', () => {
 
 test('keyboard and model sources are explicitly distinguished without verification claims', () => {
   const practice = new WinterPractice(); practice.begin(['A', 'B']);
-  practice.submit('A', 'keyboard'); assert.equal(practice.state.lastSource, 'keyboard'); assert.match(practice.state.message, /Keyboard input received/);
+  practice.submit('A', 'keyboard'); assert.equal(practice.state.lastSource, 'keyboard'); assert.match(practice.state.message, /Simulated input received/);
   practice.submit('B', 'camera'); assert.equal(practice.state.lastSource, 'camera'); assert.match(practice.state.message, /Experimental model input received/);
   assert.doesNotMatch(practice.state.message, /verified|correct sign|recognized correctly/i);
+});
+
+test('number and mixed ciphers accept all six supported inputs in rehearsal', () => {
+  const practice = new WinterPractice(); practice.begin(['1', '2', '3', 'A', 'B', 'C']);
+  for (const sign of ['1', '2', '3', 'A', 'B', 'C']) assert.equal(practice.submit(sign, 'camera'), true);
+  assert.equal(practice.state.complete, true); assert.equal(practice.state.step, 6);
 });
 
 test('rehearsal has no effect on relay or mission progress', () => {

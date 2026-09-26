@@ -18,3 +18,6 @@
 - Recognition model: pre-existing `sign_language_numbers_letters.h5` supplied from the user's LearnSign archive; not included in the client or ZIP. Training-data provenance and original label order have not been verified.
 
 Voodoo is a hackathon ecosystem/co-host partner. No Voodoo SDK is used or implied. No affiliation or endorsement beyond the supplied event context is claimed.
+
+- Canal locks, botanical glasshouse, observatory and NEXUS spire: original procedural Three.js architecture, instanced details, gate mechanisms and warning effects created for this game. No scanned environments or downloaded commercial asset packs.
+- Touch controller, portrait/landscape layouts and chapter-specific collectible text: original implementation. Bundled MediaPipe runtime/model notices are in `public/mediapipe/`.

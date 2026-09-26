@@ -8,12 +8,12 @@ Status key: **Existing** = implemented foundation, still subject to regression c
 |---|---|---|
 | 3D Louvre mission | **Existing** | Fresh playthrough bypasses three distinct relays, avoids or recovers from scans, activates the core and reaches a stable victory. |
 | Character selection: Noor, Elio, Mira | **This pass**; shared avatar/progress contract | All three choices render distinguishably, use the correct name/portrait, persist after reload and retain identical abilities. Back/cancel never changes confirmed selection. |
-| Six-chapter map | **This pass**; character selection and chapter metadata | Chapters 00/01 route to their real implementations. Chapters 02–05 visibly say **In development** and cannot start. No residual 16-sector completion claim remains in the main journey. |
+| Six-chapter map | **This pass**; character selection and chapter metadata | All six nodes route to their own implementation. Prerequisites unlock chapters sequentially; restored old Louvre progress unlocks the Canal. No residual 16-sector completion claim remains in the main journey. |
 | Chapter 00 safe simulation | **This pass**; chapter state isolated from real mission | Move four metres → **E** near practice beacon → rehearse **A** using keyboard or optional camera. No drone penalty or claimed verified signed demonstration; completion does not liberate Chapter 01 or alter collectibles. |
 | Title → choice → map → training → mission | **This pass**; all above | One fresh playthrough follows the complete path using normal UI controls. Continue restores the correct chapter and character. |
 | Training skip and replay | **This pass**; separate completion flags | Skip records `tutorialSkipped`, unlocks the Louvre and leaves tutorial completion false. Replay can later earn genuine training completion without overwriting mission progress. |
 | Contextual practice | **Existing**; recheck both chapters | Practice opens only in an appropriate state, pauses unsafe interaction, explains keyboard/experimental camera mode and returns cleanly without changing real mission progress. |
-| Reward and next-chapter flow | **This pass**; valid mission completion | Victory offers restored-world exploration, replay and map. Planned Chapter 02 stays nonplayable; it is never a relabeled Louvre copy. |
+| Reward and next-chapter flow | **This pass**; valid mission completion | Victory offers restored-world exploration, replay and map. Victory unlocks and launches the next distinct environment; the Spire ends the campaign. |
 | Saves and migrations | **This pass**; final state schema | Existing Louvre saves load or fail safely with a clear recovery path. Character, tutorial and mission progress remain separate; invalid data cannot unlock chapters. |
 
 P0 proof to retain:
@@ -23,7 +23,7 @@ P0 proof to retain:
 - [ ] Complete Chapter 00; verify Chapter 01 still begins as an uncompleted mission.
 - [ ] Skip Chapter 00; verify `tutorialSkipped` survives reload, the Louvre unlocks, and no fake tutorial completion badge, reward or statistic appears.
 - [ ] Reload after one relay, after tutorial completion and after victory; verify the right state resumes.
-- [ ] Click and keyboard-focus every planned node; verify no empty level launches.
+- [ ] Check every locked node and its prerequisites on desktop and touch.
 
 ## P1 — feel, accessibility and polish
 
@@ -65,7 +65,9 @@ Next art-production delivery sequence:
 - [ ] Test camera denial, missing device, no hand, low confidence, disconnected service and slow provider response.
 - [ ] Keep raw camera images local in the browser architecture; verify no provider keys or model file enter the public frontend bundle.
 
-## P3 — campaign expansion, one finished chapter at a time
+## P3 — campaign expansion and further production polish
+
+The first playable versions of Chapters 02–05 are now implemented: distinct procedural environments, ordered sign-input mechanisms, persistent route barriers, timed warning zones, memories and restoration endings. Automated tests cover progression, geometry routes and save isolation. The richer interactions below remain production targets; these prototypes do not yet implement manual reflector rotation, vertical platforming or a combat boss.
 
 | Chapter | Build order and dependencies | Done means |
 |---|---|---|
@@ -83,4 +85,4 @@ Do not open a chapter node until its own start-to-finish journey, saves, failure
 - [ ] Confirm title, map, README and submission describe only verified playable chapters and integrations.
 - [ ] Package a clean public source repository with setup instructions, architecture, asset provenance and honest model/provider limitations.
 - [ ] Verify a free itch.io upload starts correctly and backend hosting is separately configured where needed.
-- [ ] Prepare a five-minute demo: choose a character → brief training → real Louvre action → restoration → explain the four planned chapters and remaining educational validation.
+- [ ] Prepare a five-minute demo: choose a character → brief training → real Louvre action → restoration → show a later sector and explain the remaining educational validation.

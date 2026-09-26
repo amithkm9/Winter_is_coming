@@ -1,3 +1,17 @@
+# Current delivery — chapters 02–05 and mobile
+
+- [x] Build Canal: sequential lock bridges, frozen water, timed warning zones and restoration.
+- [x] Build Glasshouse: light circuits, growth gates, botanical restoration and seed archive.
+- [x] Build Observatory: instruments, star sequences, signal barriers and route discovery.
+- [x] Build Spire: combined six-input sequences, energy hazards and final dawn.
+- [x] Connect sequential chapter unlocks, separate mission saves, Continue and next-chapter rewards.
+- [x] Add touch movement, drag look, run/interact/view controls and six sign simulation buttons.
+- [x] Adapt map, title, HUD, camera and terminal to portrait/landscape and safe areas.
+- [x] Default mobile to reduced rendering cost and verify chapter resource disposal.
+- [x] Verify gate reachability, full campaign progression, saves and touch cancellation.
+- [x] Build itch.io package and document mobile/camera deployment requirements.
+- [ ] Verify real Android/iOS devices and the deployed itch.io iframe (manual release check).
+
 # LearnSign / Winter is Coming — build tracker
 
 ## Winter 3D preview
@@ -20,8 +34,9 @@ The current six-chapter plan and acceptance gates are in [BUILD_ROADMAP.md](docs
 - [x] Add articulated gait, ground contact, synchronized footsteps and bounded snow/footprint effects.
 - [ ] Validate walking, running and tight turns visually in a live browser on the demo machine.
 - [ ] Verify the complete UI journey and three characters in a hardware-rendered browser.
-- [ ] Build Chapter 02's canal environment and moving bridge puzzle after the first-session playtest.
-- [ ] Build Chapters 03–05 with their planned distinct mechanics and story payoffs.
+- [x] Build Chapter 02’s canal environment and persistent sign-activated bridges.
+- [x] Build first playable versions of Chapters 03–05 with distinct environments, route gates and endings.
+- [ ] Expand production mechanics with manual light routing, vertical traversal and a combat finale.
 
 - [x] Review the supplied plan; document a stronger spatial gameplay loop and story logic.
 - [x] Preserve the forest chapter and add a separate Three.js browser entry.

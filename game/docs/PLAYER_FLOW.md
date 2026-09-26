@@ -1,6 +1,6 @@
 # Playing Winter Is Coming
 
-Start at the title screen and choose **Begin your story**. The game is a browser adventure set in a frozen Paris courtyard. A keyboard-equipped computer is needed for the current build.
+Start at the title screen and choose **Begin your story**. The game is a browser adventure set in a frozen Paris courtyard. Use a keyboard-equipped computer or touch controls on a phone/tablet. Landscape gives the widest view.
 
 For a quick reminder inside the game, choose **How to play** on the title screen.
 
@@ -10,7 +10,7 @@ Choose **Noor**, **Elio**, or **Mira**. Each has a different outfit and story, w
 
 ## Choose a chapter
 
-The chapter map shows six chapters. **The First Spark** is a safe introduction, and **The Louvre Relay** is the current field mission. The remaining four chapters can be inspected on the map but are planned content and cannot be played yet.
+The chapter map shows six chapters. **The First Spark** is a safe introduction, and **The Louvre Relay** is the current field mission. Completing the Louvre unlocks **Under the Ice**, then **A Place to Grow**, **Beyond the Clouds**, and **The Returning Dawn**. Each is implemented with its own environment and ending.
 
 ## Learn the controls in The First Spark
 
@@ -54,4 +54,19 @@ After restoring all three relays, return to the core in front of the pyramid and
 
 Progress is saved on the current browser and device. Continue restores completed relays and collected memories; an unfinished terminal cipher restarts. Training does not overwrite a saved Louvre mission. Character selection and campaign progress are stored separately from the mission save.
 
-The Canal, Glasshouse, Observatory, and Spire are future chapters. Their map entries describe the intended campaign, not additional playable levels in this build.
+## Continue through Paris
+
+| Chapter | Route and interactions |
+|---|---|
+| Canal | Restore the West Lock, Pump Station and North Lock in order. Number sequences open bridges over three icy channels. Activate the canal pump. |
+| Glasshouse | Restore Root Circuit, Sunlight Array and Seed Archive using letters and numbers. Growth gates open the chambers; activate the garden heating core. |
+| Observatory | Reconnect West Reflector, Star Tracker and North Alignment. Read mixed sequences, avoid the marked sweep zones, and activate the sky beacon. |
+| Spire | Break Outer Firewall, Signal Router and NEXUS Access. The final sequence combines five inputs. Activate the central array to restore dawn to Paris. |
+
+The amber marker shows the next available mechanism. Later chapters require the three links in order; their physical barriers open as progress is made. Warning fields show a quiet phase, an amber warning, then an active red phase. Step around or wait for them. Five optional memory pages are available in each sector. Safe practice suspends danger.
+
+Each victory offers **NEXT CHAPTER**, restored-sector exploration, replay and the map. All mission saves are isolated, and Continue returns to the most recently played mission. The final Spire ending completes the campaign; previously completed chapters remain replayable.
+
+## Touch controls
+
+Move using the lower-left joystick. Drag an empty part of the scene with a second finger to look. Tap **RUN** to toggle faster movement, **INTERACT** near a mechanism and **VIEW** to switch camera perspective. The terminal has six large simulation buttons; camera recognition is optional. Pause or leaving the app clears active touch movement. See [MOBILE_ITCH.md](MOBILE_ITCH.md) for deployment and device-test requirements.
