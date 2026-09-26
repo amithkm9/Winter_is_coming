@@ -41,6 +41,7 @@ build/
 .env*.local
 *.pem
 credentials.json
+TOKEN_USAGE.md
 
 # IDE and OS
 .vscode/*

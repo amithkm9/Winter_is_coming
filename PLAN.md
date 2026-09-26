@@ -265,9 +265,9 @@ To deliver a dynamic yet balanced experience, tasks are created via a **Hybrid G
 - [ ] Implement client-side task validation and real-time step advancement when player completes gesture.
 
 ### Phase 4: Interactive Paris Map & Game State Engine - Prajwal
-- [ ] Implement interactive vector SVG map of the 16 curated Paris arrondissements.
-- [ ] Build game state manager (current district, unlocked progression tree, liberated stats, score).
-- [ ] Create district reclamation animations (cyber-ice melting, glitch dissipation, golden dawn glow).
+- [x] Implement interactive vector SVG map of the 16 curated Paris arrondissements.
+- [x] Build game state manager (current district, unlocked progression tree, liberated stats, score).
+- [x] Create district reclamation animations (cyber-ice melting, glitch dissipation, golden dawn glow).
 
 ### Phase 5: Audio, Visual FX & Cyberpunk Polish - ele
 - [ ] Dystopian ambient soundtrack and Web Audio sound effects (terminal keystrokes, scanline hum, victory chimes).
