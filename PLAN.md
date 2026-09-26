@@ -244,37 +244,37 @@ To deliver a dynamic yet balanced experience, tasks are created via a **Hybrid G
 
 ## 6. Implementation Roadmap for Hackathon
 
-### Phase 1: Foundation & Project Scaffolding
+### Phase 1: Foundation & Project Scaffolding -ele, Nithin, Prajwal, Amith.K.M
 - [x] Repository initialized with Git workflow and branch protection.
 - [ ] Initialize Python FastAPI backend environment (`uvicorn`, `fastapi`, `opencv-python`, `mediapipe`, `websockets`).
 - [ ] Initialize React + TypeScript + Vite frontend project structure.
 - [ ] Setup Tailwind CSS with custom dystopian color palette (neon cyan, glitch crimson, cryogenic white, resistance gold).
 - [ ] Embed cyberpunk video player component for opening AI takeover intro sequence (with drop-in asset support).
 
-### Phase 2: Computer Vision & Hand Sign Engine
+### Phase 2: Computer Vision & Hand Sign Engine - Amith.K.M
 - [ ] Build Python backend OpenCV + MediaPipe hand tracking pipeline (21 3D hand landmarks @ 60 FPS).
 - [ ] Implement WebSocket server streaming video frames/landmarks between React client and FastAPI.
 - [ ] Build gesture matcher with confidence threshold ($\ge 85\%$) and hold-duration accumulator ($1.0 - 1.5\text{s}$).
 - [ ] Create interactive HUD "Sign Guide Card" modal showing players hand posture cues for instant learning.
 
-### Phase 3: Task & Mission Generation Engine (Procedural + AI-Powered)
+### Phase 3: Task & Mission Generation Engine (Procedural + AI-Powered) - Nithin
 - [ ] Implement Task Generator module in FastAPI (`GET /api/districts/{id}/task` & WebSocket events).
 - [ ] Define the 4-tier difficulty progression curve (Single static signs $\rightarrow$ Multi-sign combos $\rightarrow$ Glitch interference $\rightarrow$ Apex speed decryption).
 - [ ] Integrate Google Gemini Flash API for dynamic resistance handler briefings, AI taunts, and thematic cipher riddles.
 - [ ] Build zero-dependency deterministic fallback profiles for 100% offline hackathon reliability.
 - [ ] Implement client-side task validation and real-time step advancement when player completes gesture.
 
-### Phase 4: Interactive Paris Map & Game State Engine
+### Phase 4: Interactive Paris Map & Game State Engine - Prajwal
 - [ ] Implement interactive vector SVG map of the 16 curated Paris arrondissements.
 - [ ] Build game state manager (current district, unlocked progression tree, liberated stats, score).
 - [ ] Create district reclamation animations (cyber-ice melting, glitch dissipation, golden dawn glow).
 
-### Phase 5: Audio, Visual FX & Cyberpunk Polish
+### Phase 5: Audio, Visual FX & Cyberpunk Polish - ele
 - [ ] Dystopian ambient soundtrack and Web Audio sound effects (terminal keystrokes, scanline hum, victory chimes).
 - [ ] Dynamic AI boss dialogue animations (visual waveforms and glitch typography).
 - [ ] Grand victory cinematic sequence upon reclaiming all 16 districts.
 
-### Phase 6: Testing, Deployment & Presentation Demo
+### Phase 6: Testing, Deployment & Presentation Demo 
 - [ ] End-to-end playtesting across various webcam lighting conditions and angles.
 - [ ] Containerize / deploy backend and frontend for instant live judging demonstration.
 - [ ] Prepare 2-minute pitch deck, live demo script, and video walkthrough for Google DeepMind & VOODOO judges.
