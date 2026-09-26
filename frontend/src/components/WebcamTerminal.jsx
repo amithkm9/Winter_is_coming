@@ -3,6 +3,8 @@ import { Camera, CameraOff, Sparkles, CheckCircle, AlertTriangle, Clock, ShieldC
 import { gestureVision } from '../services/gestureEngine';
 import { SIGN_DICTIONARY } from '../data/signDictionary';
 import { sound } from '../services/sound';
+import { useMissionSession } from '../hooks/useMissionSession';
+import { localSignFor } from '../data/signBridge';
 
 export default function WebcamTerminal({
   sector,
@@ -14,6 +16,7 @@ export default function WebcamTerminal({
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
+  const signSuccessRef = useRef(() => {});
 
   const [hasCamera, setHasCamera] = useState(true);
   const [cameraActive, setCameraActive] = useState(false);
@@ -34,9 +37,14 @@ export default function WebcamTerminal({
     isFailed: false
   });
 
+  // Server-authoritative mission run (backend task engine, Phase 3).
+  // Falls back to the district profile in data/arrondissements.js when offline.
+  const server = useMissionSession(sector?.id, Boolean(sector) && !isPractice);
+
   // Determine current active target sign
   const getTargetSignId = () => {
     if (isPractice) return null;
+    if (server.online && server.targetSignId) return server.targetSignId;
     if (!sector) return 'PEACE';
 
     if (sector.missionType === 'SINGLE_SIGN') {
@@ -53,6 +61,14 @@ export default function WebcamTerminal({
 
   const currentTargetSignId = getTargetSignId();
   const currentTargetSign = currentTargetSignId ? SIGN_DICTIONARY[currentTargetSignId] : null;
+  const requiredHoldSec = server.online
+    ? server.currentStep?.holdDurationSec ?? 1.5
+    : sector?.holdDuration ?? 1.5;
+  const isTimedMission =
+    server.online ||
+    sector?.missionType === 'SEQUENCE' ||
+    sector?.missionType === 'SPEED_DEFENSE' ||
+    sector?.missionType === 'NEXUS_BOSS';
 
   // Initialize Camera & Vision Model
   useEffect(() => {
@@ -102,8 +118,10 @@ export default function WebcamTerminal({
   useEffect(() => {
     if (isPractice || missionState.isCompleted || missionState.isFailed) return;
 
-    if (sector?.missionType === 'SEQUENCE' || sector?.missionType === 'SPEED_DEFENSE' || sector?.missionType === 'NEXUS_BOSS') {
-      const initialTime = sector.timeLimit || 20;
+    if (isTimedMission) {
+      const initialTime = server.online
+        ? server.mission?.timeLimitSeconds || 20
+        : sector.timeLimit || 20;
       setMissionState(prev => ({ ...prev, timeLeft: initialTime }));
 
       const timer = setInterval(() => {
@@ -120,13 +138,13 @@ export default function WebcamTerminal({
 
       return () => clearInterval(timer);
     }
-  }, [sector, missionState.sequenceIdx, missionState.phase, isPractice]);
+  }, [sector, missionState.sequenceIdx, missionState.phase, isPractice, isTimedMission, server.online, server.mission]);
 
   // Main Computer Vision Detection Loop
   useEffect(() => {
     let lastHoldTime = null;
     let accumulatedHold = 0;
-    const requiredHoldTime = (sector?.holdDuration || 1.5) * 1000;
+    const requiredHoldTime = requiredHoldSec * 1000;
 
     const processFrame = () => {
       if (videoRef.current && canvasRef.current && cameraActive) {
@@ -164,7 +182,7 @@ export default function WebcamTerminal({
               }
 
               if (accumulatedHold >= requiredHoldTime) {
-                handleSignSuccess();
+                signSuccessRef.current(result.confidence);
                 accumulatedHold = 0;
                 lastHoldTime = null;
               }
@@ -194,16 +212,29 @@ export default function WebcamTerminal({
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [cameraActive, currentTargetSignId, sector]);
+  }, [cameraActive, currentTargetSignId, sector, requiredHoldSec]);
 
   // Handle successful gesture completion
-  const handleSignSuccess = () => {
+  const handleSignSuccess = async (detectedConfidence = confidence) => {
     sound.playSuccess();
     setHoldProgress(0);
 
     if (isPractice) return;
 
     if (!sector) return;
+
+    if (server.online) {
+      const result = await server.reportHold(detectedConfidence);
+      if (result) {
+        if (!result.accepted) return;
+        if (result.completed) {
+          setMissionState(prev => ({ ...prev, isCompleted: true }));
+          if (onMissionComplete) onMissionComplete(sector);
+        }
+        return;
+      }
+      // Backend dropped mid-mission: continue with the offline profile below.
+    }
 
     if (sector.missionType === 'SINGLE_SIGN') {
       setMissionState(prev => ({ ...prev, isCompleted: true }));
@@ -229,6 +260,8 @@ export default function WebcamTerminal({
     }
   };
 
+  signSuccessRef.current = handleSignSuccess;
+
   // Virtual Gesture trigger (for testing / without webcam)
   const triggerVirtualSign = (signKey) => {
     sound.playClick();
@@ -236,7 +269,7 @@ export default function WebcamTerminal({
     setConfidence(98);
     setHoldProgress(100);
     setTimeout(() => {
-      handleSignSuccess();
+      handleSignSuccess(98);
     }, 400);
   };
 
@@ -267,7 +300,7 @@ export default function WebcamTerminal({
 
         {/* Timer / Exit Button */}
         <div className="flex items-center gap-3">
-          {(sector?.missionType === 'SEQUENCE' || sector?.missionType === 'SPEED_DEFENSE' || sector?.missionType === 'NEXUS_BOSS') && !isPractice && (
+          {isTimedMission && !isPractice && (
             <div className={`flex items-center gap-2 px-4 py-1.5 rounded-xl font-mono text-base font-black border ${
               missionState.timeLeft <= 5
                 ? 'bg-red-950 border-red-500 text-red-300 shadow-[0_0_15px_#ff0055] animate-pulse'
@@ -288,6 +321,24 @@ export default function WebcamTerminal({
           )}
         </div>
       </div>
+
+      {/* Resistance Handler Briefing (streamed from the backend task engine) */}
+      {server.online && server.mission && (
+        <div className="relative z-10 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+          <div className="bg-slate-950/90 border-l-4 border-cyan-400 p-3.5 rounded-r-2xl">
+            <div className="text-[10px] font-bold text-cyan-400 mb-1">
+              RESISTANCE HANDLER // TIER {server.mission.difficultyTier} // {server.mission.missionType}
+            </div>
+            <p className="text-slate-200 leading-relaxed">{server.mission.narrative.handlerBriefing}</p>
+          </div>
+          <div className="bg-slate-950/90 border-l-4 border-red-500 p-3.5 rounded-r-2xl">
+            <div className="text-[10px] font-bold text-red-400 mb-1">
+              {server.mission.bossNode} // COUNTERMEASURE: {server.mission.counterMeasure}
+            </div>
+            <p className="text-slate-300 italic leading-relaxed">"{server.mission.narrative.aiTaunt}"</p>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Video Stream + Target Sign HUD */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -414,8 +465,38 @@ export default function WebcamTerminal({
                 💡 Hint: {currentTargetSign.mnemonic}
               </div>
 
+              {/* Server Mission Sequence Indicator */}
+              {server.online && server.totalSteps > 1 && (
+                <div className="mt-4 pt-3 border-t border-slate-800">
+                  <div className="text-xs font-mono text-cyan-400 mb-2 font-bold">
+                    CIPHER SEQUENCE PROGRESS // STEP {server.stepIndex + 1} OF {server.totalSteps}:
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {server.mission.requiredSequence.map((step, idx) => (
+                      <div
+                        key={step.step}
+                        className={`flex-1 flex flex-col items-center p-2 rounded-xl border text-center transition-all ${
+                          idx === server.stepIndex
+                            ? 'bg-cyan-950 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.5)] scale-105'
+                            : idx < server.stepIndex
+                            ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400'
+                            : 'bg-slate-900/80 border-slate-800 text-slate-600'
+                        }`}
+                      >
+                        <span className="text-base">
+                          {SIGN_DICTIONARY[localSignFor(step.gestureKey)]?.symbol || '✋'}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold mt-1">
+                          {idx < server.stepIndex ? 'DONE' : idx === server.stepIndex ? 'ACTIVE' : `P${idx + 1}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Sequence Steps Indicator */}
-              {(sector?.missionType === 'SEQUENCE' || sector?.missionType === 'SPEED_DEFENSE') && (
+              {!server.online && (sector?.missionType === 'SEQUENCE' || sector?.missionType === 'SPEED_DEFENSE') && (
                 <div className="mt-4 pt-3 border-t border-slate-800">
                   <div className="text-xs font-mono text-cyan-400 mb-2 font-bold">
                     CIPHER SEQUENCE PROGRESS:
@@ -443,7 +524,7 @@ export default function WebcamTerminal({
               )}
 
               {/* Boss Phases */}
-              {sector?.missionType === 'NEXUS_BOSS' && (
+              {!server.online && sector?.missionType === 'NEXUS_BOSS' && (
                 <div className="mt-4 pt-3 border-t border-slate-800">
                   <div className="text-xs font-mono text-red-400 mb-2 font-bold">
                     BOSS PHASES // {sector.bossPhases[missionState.phase]?.name}:

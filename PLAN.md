@@ -202,7 +202,16 @@ To deliver a dynamic yet balanced experience, tasks are created via a **Hybrid G
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Tech Stack Selection (Agreed Architecture)
+### 4.2 Repository Layout
+
+| Path | Contents |
+| :--- | :--- |
+| `backend/` | FastAPI task & mission engine (Phase 3), Gemini narrative adapter with deterministic offline fallback |
+| `frontend/` | React + Vite client (Phases 1, 4, 5): cinematic intro, tactical map, webcam terminal |
+
+Gesture classification currently runs in the browser via MediaPipe Tasks Vision; the backend remains authoritative for mission generation, step advancement, hold/confidence thresholds and time limits. The Phase 2 OpenCV/MediaPipe server pipeline consumes the same `GestureAttempt` contract, so it can take over classification without changing the mission API.
+
+### 4.3 Tech Stack Selection (Agreed Architecture)
 
 | Component | Choice | Rationale |
 | :--- | :--- | :--- |
