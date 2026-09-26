@@ -7,12 +7,12 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --max-old-space-size=4096 --experimental-strip-types --test tests/*.test.mjs",
     "test:runtime": "node scripts/runtime-smoke.mjs",
     "test:winter-world": "node scripts/winter-world-smoke.mjs",
     "art:preview": "node scripts/render-art.mjs",
-    "package:itch": "npm run build && python3 scripts/package_itch.py",
-    "package:winter": "npm run build && python3 scripts/package_itch.py --winter"
+    "package:itch": "npm run build && node scripts/package-itch.mjs",
+    "package:winter": "npm run build && node scripts/package-itch.mjs --winter"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.32",

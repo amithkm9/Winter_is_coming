@@ -28,7 +28,7 @@ function saveCampaign(){try{localStorage.setItem(CAMPAIGN_SAVE,campaign.serializ
 const $ = <T extends HTMLElement = HTMLElement>(id:string)=>document.getElementById(id) as T;
 const ui=$('winter-ui');
 ui.innerHTML=`
-<section class="hero-menu" id="menu"><header class="brand-row"><div class="wordmark"><span class="monogram">W/C</span> THE SILENT RESISTANCE</div><div class="menu-nav"><a href="./forest.html">LearnSign forest ↗</a><span class="label muted">REAL-TIME 3D</span><button class="small-button" id="how-to-play">HOW TO PLAY</button><button class="small-button" id="menu-settings">SETTINGS</button></div></header>
+<section class="hero-menu" id="menu"><header class="brand-row"><div class="wordmark"><span class="monogram">W/C</span> THE SILENT RESISTANCE</div><div class="menu-nav"><a href="./forest.html">LearnSign forest ↗</a><span class="label muted">REAL-TIME 3D</span><button class="small-button" id="watch-intro">WATCH INTRO 🎬</button><button class="small-button" id="how-to-play">HOW TO PLAY</button><button class="small-button" id="menu-settings">SETTINGS</button></div></header>
 <div class="title-copy"><div class="coordinates label gold">PARIS, 2091 &nbsp; // &nbsp; −27°C</div><h1>WINTER<br>IS <span>COMING.</span></h1><p>Three students. A city waiting for spring.<br>Choose your story. Find your courage.<br>Learn, explore, and bring back the light.</p><div class="menu-buttons"><button class="enter" id="start">BEGIN YOUR STORY <span>↗</span></button><button class="enter secondary" id="continue" hidden>CONTINUE MISSION</button><button class="enter secondary" id="chapter-map">CHAPTER MAP</button></div><div class="student-tag" id="student-tag">${student.name.toUpperCase()} / STUDENT EXPLORER</div><div class="title-subnote">THREE STUDENTS · SAFE TRAINING · A PLAYABLE 3D ADVENTURE</div><p class="mobile-note">Keyboard or touch controls · Landscape recommended on phones.</p></div>
 <footer class="menu-footer"><div class="chapter"><span class="chapter-number">01</span><div><div class="label">THE LOUVRE RELAY</div><small>A city held in ice. Three relays. One chance to bring back the dawn.</small><div class="sector-track">${'<i></i>'.repeat(6)}</div></div></div><div class="menu-footer-note"><strong>SIX CHAPTERS / ONE JOURNEY</strong><br>Training + five missions · One city to restore</div></footer></section>
 <section class="hud" id="hud" hidden><div class="hud-top"><div class="mission-heading"><div class="label gold" id="chapter-label">CHAPTER 01 / COUR NAPOLÉON</div><h2 id="objective-title">RESTORE THE RELAYS</h2><p id="objective">Find three optical terminals in the courtyard.</p><div class="relay-progress" id="relay-progress"><i></i><i></i><i></i></div><div class="memory-progress" id="memory-progress">◇ MEMORIES 0 / 5</div><div class="mode" id="mode">GESTURE INPUTS · A B C / 1 2 3</div></div><div class="hud-right"><button id="view-button" class="view-button" aria-label="Switch to eye-level view" title="Switch view (V)">VIEW · 3RD</button><button id="journal" aria-label="Open Noor’s journal" title="Noor’s journal">✎</button><button id="hint" aria-label="Ask resistance handler for a hint" title="Ask for a hint">✧</button><button id="camera-button" aria-label="Enable experimental camera" title="Camera">▣</button><button id="pause-button" aria-label="Pause mission" title="Pause">Ⅱ</button></div></div><div class="hud-bottom"><div class="controls"><span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span><span><kbd>Drag</kbd> Look</span><span><kbd>V</kbd> View</span><span><kbd>E</kbd> Interact</span><span><kbd>Esc</kbd> Pause</span></div><div class="exposure"><div class="exposure-line"><span>SURVEILLANCE EXPOSURE</span><span id="alert-value">0%</span></div><div class="exposure-track"><div id="alert-fill"></div></div></div></div></section>
@@ -40,7 +40,8 @@ ui.innerHTML=`
 <section class="overlay" id="modal" hidden><div class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div></section>
 <aside class="camera" id="camera-panel" hidden><header>OPTICAL INPUT / EXPERIMENTAL <button id="camera-close" aria-label="Stop camera">×</button></header><div class="camera-media"><video id="camera-video" muted playsinline></video><canvas id="camera-canvas"></canvas></div><p id="camera-target" class="camera-target">Approach a terminal to use your signs.</p><p id="camera-status" role="status"></p><button id="camera-retry" class="small-button">RESTART CAMERA</button></aside>
 ${[0,1,2].map(i=>`<div class="nav-marker" id="marker-${i}" hidden><span>◇</span><div id="marker-label-${i}"></div></div>`).join('')}
-<div class="nav-marker core-marker" id="marker-core" hidden><span>✦</span><div id="marker-core-label"></div></div><section class="training-progress" id="training-progress" hidden><div class="label">THE FIRST SPARK / SAFE SIMULATION</div><h3 id="training-title"></h3><p id="training-text"></p><div class="training-steps"><i></i><i></i><i></i></div></section><div class="scan-warning" id="scan-warning" hidden><strong>SCANNER NEARBY</strong><span>Move out of the red pool</span></div><div class="input-feedback" id="input-feedback" hidden aria-live="polite"></div><div class="warning" id="warning" hidden></div><div class="sr-only" id="announcer" aria-live="polite"></div>`;
+<div class="nav-marker core-marker" id="marker-core" hidden><span>✦</span><div id="marker-core-label"></div></div><section class="training-progress" id="training-progress" hidden><div class="label">THE FIRST SPARK / SAFE SIMULATION</div><h3 id="training-title"></h3><p id="training-text"></p><div class="training-steps"><i></i><i></i><i></i></div></section><div class="scan-warning" id="scan-warning" hidden><strong>SCANNER NEARBY</strong><span>Move out of the red pool</span></div><div class="input-feedback" id="input-feedback" hidden aria-live="polite"></div><div class="warning" id="warning" hidden></div><div class="sr-only" id="announcer" aria-live="polite"></div>
+<section class="video-overlay" id="video-intro" hidden aria-label="Prologue cinematic"><div class="video-container"><div class="video-header"><div class="label gold">TRANSMISSION // AI TAKEOVER PROLOGUE</div><button class="skip" id="video-skip">SKIP INTRO →</button></div><div class="video-frame"><video id="prologue-video" playsinline webkit-playsinline controls preload="auto" src="./Opening_Full_subtitled.mp4"></video></div><div class="video-footer"><small>PARIS · CRYOGENIC AI TAKEOVER · RESTORE THE RESISTANCE</small></div></div></section>`;
 
 let chapter:MissionChapter='louvre',level=LEVELS.louvre,mission=new WinterMission('louvre');
 const practice=new WinterPractice(),soundscape=new WinterAudio();
@@ -49,7 +50,7 @@ const missionKey=(id:MissionChapter)=>`winter-${id}-v1`;
 const mobileDevice=matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0;
 function resumeChapter():MissionChapter{try{const id=localStorage.getItem(LAST_CHAPTER) as MissionChapter;return isMissionChapter(id)&&['available','completed'].includes(campaign.status(id))?id:'louvre';}catch{return 'louvre';}}
 const stored=(()=>{try{const data=JSON.parse(localStorage.getItem(SETTINGS)||'{}');return data&&typeof data==='object'&&!Array.isArray(data)?data:{};}catch{return {};}})();
-const settings={view:parseViewMode(stored.view),low:typeof stored.low==='boolean'?stored.low:mobileDevice,reduced:typeof stored.reduced==='boolean'?stored.reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,sound:stored.sound!==false,music:stored.music!==false,volume:typeof stored.volume==='number'&&Number.isFinite(stored.volume)?Math.max(0,Math.min(.8,stored.volume)):.45,voice:stored.voice===true};
+const settings={view:parseViewMode(stored.view),low:typeof stored.low==='boolean'?stored.low:mobileDevice,reduced:typeof stored.reduced==='boolean'?stored.reduced:false,sound:stored.sound!==false,music:stored.music!==false,volume:typeof stored.volume==='number'&&Number.isFinite(stored.volume)?Math.max(0,Math.min(.8,stored.volume)):.45,voice:stored.voice===true};
 let active=false,paused=false,intro=false,introTime=0,animation=0,lastTime=performance.now(),time=0,saveClock=0;
 let yaw=0,pitch=0,dragging=false,lookPointer:number|null=null,lastPointer=0,lastPointerY=0,modalOpen=false,previousPhase='',previousRelays=0,previousRespawns=0,hints=0;
 let nearest:number|null=null,nearCore=false,toastTimer=0,transmissionTimer=0,service:ServiceHealth|null=null,cameraStarting=false;
@@ -132,17 +133,50 @@ function start(continuing=false,training=false,id:MissionChapter=chapter){
   if(restored&&mission.state.phase==='complete')transmit(level.completion);
   soundscape.setPaused(false);void soundscape.unlock().then(()=>{if(active&&!paused)sound('start');});save();renderer.domElement.focus();
 }
-$('start').onclick=()=>{$('menu').hidden=true;journey.showCharacters();};
+function playVideoModal(videoSrc:string,titleText:string,onDone:()=>void){
+  const overlay=$('video-intro'),video=$<HTMLVideoElement>('prologue-video'),headerLabel=overlay?.querySelector('.label');
+  if(!overlay||!video){onDone();return;}
+  if(headerLabel)headerLabel.textContent=titleText;
+  video.src=videoSrc;
+  overlay.hidden=false;soundscape.setPaused(true);
+  let finished=false;
+  const finish=()=>{
+    if(finished)return;finished=true;
+    try{video.pause();video.currentTime=0;}catch{}
+    overlay.hidden=true;soundscape.setPaused(false);
+    onDone();
+  };
+  video.onended=finish;video.onerror=finish;
+  const skip=$('video-skip');if(skip)skip.onclick=finish;
+  video.onclick=()=>{if(video.muted){video.muted=false;video.play().catch(()=>{});}};
+  try{
+    const p=video.play();
+    if(p&&typeof p.catch==='function')p.catch(()=>{
+      // If browser blocks unmuted autoplay, start muted and allow tap to unmute
+      video.muted=true;
+      video.play().catch(()=>{});
+    });
+  }catch{finish();}
+}
+
+function playPrologue(onDone:()=>void){
+  playVideoModal('./Opening_Full_subtitled.mp4','TRANSMISSION // AI TAKEOVER PROLOGUE',onDone);
+}
+
+$('start').onclick=()=>{$('menu').hidden=true;playPrologue(()=>{journey.showCharacters();});};
+const watchIntroBtn=$('watch-intro');if(watchIntroBtn)watchIntroBtn.onclick=()=>{$('menu').hidden=true;playPrologue(()=>{$('menu').hidden=false;$('start').focus();});};
 $('chapter-map').onclick=()=>openChapterMap();
 $('continue').onclick=()=>start(true,false,resumeChapter());
 function endIntro(){intro=false;$('briefing').hidden=true;$('letterbox').hidden=true;$('hud').hidden=false;stopVoice();transmit(`${student.name}, ${level.arrival} Use E or INTERACT near a terminal. Safe practice is always available.`);renderer.domElement.focus();}
 $('skip').onclick=()=>{void soundscape.unlock();endIntro();};
+$('briefing').onclick=()=>{if(intro){void soundscape.unlock();endIntro();}};
+$('briefing').addEventListener('pointerdown',()=>{if(intro){void soundscape.unlock();endIntro();}});
 
 let lastFocus:HTMLElement|null=null;
 function openModal(content:string){if(!modalOpen)lastFocus=document.activeElement as HTMLElement;modalOpen=true;paused=true;soundscape.setPaused(true);keys.clear();touch.reset();dragging=false;lookPointer=null;stopVoice();tracker.stop();$('camera-panel').hidden=true;$('panel').innerHTML=content;$('modal').hidden=false;$('panel').querySelector<HTMLButtonElement>('button')?.focus();}
 function closeModal(){modalOpen=false;paused=false;soundscape.setPaused(!active);if(active)void soundscape.unlock();keys.clear();$('modal').hidden=true;lastFocus?.focus();}
 function pauseMenu(){if(!active||intro)return;save();openModal(`<div class="label gold">${academy?'TRAINING BREAK':'OPERATION ON HOLD'}</div><h2 id="modal-title">Take your time.</h2><p>${academy?'This is a safe simulation. You can return to the map or skip training without earning its completion badge.':'The city waits. Completed relays are saved on this device.'}</p><button class="enter" id="resume">RESUME →</button><button class="enter secondary" id="pause-map">CHAPTER MAP</button>${academy?'<button class="enter secondary" id="skip-training">SKIP TRAINING · ENTER LOUVRE</button>':''}<button class="enter secondary" id="pause-settings">VISUAL & AUDIO SETTINGS</button><button class="enter secondary" id="title">RETURN TO TITLE</button>`);$('resume').onclick=closeModal;$('pause-settings').onclick=showSettings;$('title').onclick=returnToTitle;$('pause-map').onclick=()=>openChapterMap(academy?'academy':chapter);if(academy)$('skip-training').onclick=()=>{campaign.skipTutorial();saveCampaign();start(hasSave('louvre'),false,'louvre');};}
-function returnToTitle(){save();operation++;active=false;paused=false;intro=false;modalOpen=false;academy=false;trainingBeacon.visible=false;practice.stop();touch.reset();discoveries.group.visible=false;soundscape.setPaused(true);keys.clear();tracker.stop();stopVoice();journey.hide();['hud','modal','terminal','briefing','letterbox','camera-panel','interact','toast','transmission','scan-warning','input-feedback','training-progress','marker-core'].forEach(id=>$(id).hidden=true);$('menu').hidden=false;$('continue').hidden=!hasSave(resumeChapter());document.body.classList.remove('terminal-open','academy','practising');}
+function returnToTitle(){save();operation++;active=false;paused=false;intro=false;modalOpen=false;academy=false;trainingBeacon.visible=false;practice.stop();touch.reset();discoveries.group.visible=false;soundscape.setPaused(true);keys.clear();tracker.stop();stopVoice();journey.hide();['hud','modal','terminal','briefing','letterbox','camera-panel','interact','toast','transmission','scan-warning','input-feedback','training-progress','marker-core','video-intro'].forEach(id=>$(id).hidden=true);const vid=$<HTMLVideoElement>('prologue-video');if(vid){try{vid.pause();vid.currentTime=0;}catch{}}$('menu').hidden=false;$('continue').hidden=!hasSave(resumeChapter());document.body.classList.remove('terminal-open','academy','practising');}
 function openChapterMap(chapter?:ChapterId){returnToTitle();$('menu').hidden=true;journey.showMap(chapter);}
 $('pause-button').onclick=pauseMenu;$('menu-settings').onclick=showSettings;
 $('how-to-play').onclick=()=>{
@@ -154,8 +188,12 @@ function showSettings(){openModal(`<div class="label gold">REAL-TIME CINEMATOGRA
 async function refreshServices(){service=await health();const el=document.getElementById('services');if(el)el.textContent=service?`Gemini: ${service.gemini?'key configured (not proof of connection)':'not configured'}. Gradium: ${service.gradium?'key configured':'not configured'}. Recognition: ${service.recognition?'experimental model available':'unavailable'}.`:'Companion service offline. Keyboard gameplay and authored transmissions remain available.';}
 void refreshServices();
 function toast(title:string,text:string){if(modalOpen)return;clearTimeout(toastTimer);$('toast-title').textContent=title;$('toast-text').textContent=text;$('toast').hidden=false;$('announcer').textContent=`${title}. ${text}`;toastTimer=window.setTimeout(()=>$('toast').hidden=true,3800);}
+$('toast').onclick=()=>{clearTimeout(toastTimer);$('toast').hidden=true;};
+$('toast').addEventListener('pointerdown',e=>{e.stopPropagation();clearTimeout(toastTimer);$('toast').hidden=true;});
 function transmit(text:string,source='AUTHORED TRANSMISSION'){if(modalOpen||!active||intro||paused)return;clearTimeout(transmissionTimer);$('transmission-text').textContent=text;$('transmission-source').textContent=source;$('transmission').hidden=false;transmissionTimer=window.setTimeout(()=>$('transmission').hidden=true,10000);if(settings.voice&&service?.gradium)void speak(text);}
-$('transmission-close').onclick=()=>{$('transmission').hidden=true;stopVoice();};
+$('transmission').onclick=()=>{clearTimeout(transmissionTimer);$('transmission').hidden=true;stopVoice();};
+$('transmission').addEventListener('pointerdown',e=>{e.stopPropagation();clearTimeout(transmissionTimer);$('transmission').hidden=true;stopVoice();});
+$('transmission-close').onclick=(e)=>{e.stopPropagation();$('transmission').hidden=true;stopVoice();};
 $('hint').onclick=async()=>{if(!academy&&chapter!=='louvre'){transmit(mission.state.completed.length===3?`All circuits are ready. Reach ${level.coreName} and use INTERACT or E.`:`${level.arrival} Restore the marked link, then follow the newly opened route. Safe practice stops danger while you rehearse.`);return;}if(academy){const message=onboarding.state.stage===0?'Use WASD or the arrow keys to walk a few steps. Drag on the scene to look around.':onboarding.state.stage===1?'Approach the glowing green practice beacon in front of you and press E.':'Press A in practice to rehearse a keyboard input, or enable the camera for experimental recognition. There is no drone danger here.';feedback(message);return;}const button=$<HTMLButtonElement>('hint');button.disabled=true;const generation=operation;const state=mission.state;const encounter=state.phase==='complete'?'winter-liberated':state.completed.length===3?'winter-core':state.alert>40?'winter-drone':state.phase==='terminal'?'winter-relay':'winter-arrival';try{const result=await getHint(encounter,['A','B','C'],++hints);if(generation!==operation)return;transmit(result.text,result.source==='gemini'?'GEMINI TRANSMISSION':'AUTHORED TRANSMISSION');}catch{if(generation!==operation)return;transmit(state.completed.length===3?'All three relays are restored. Return to the illuminated core in front of the pyramid and press E.':'Follow the amber diamonds to an optical terminal. Press E nearby, then enter its A/B/C cipher. Avoid the red drone scanner pools.','OFFLINE TRANSMISSION');}finally{button.disabled=false;}};
 
 function feedback(text:string,success=true){
@@ -174,14 +212,19 @@ function interact(){
   if(!active||paused||intro)return;
   if(mission.state.phase==='terminal'){leaveTerminal();return;}
   if(academy){
-    if(position.distanceTo(trainingBeacon.position)<3&&(onboarding.enterBeacon()||onboarding.state.stage===2)){
-      dragging=false;lookPointer=null;touch.reset();tracker.resetRecognition();mission.enterRelay(0);practice.begin(['A']);keys.clear();sound('terminal');
+    if(position.distanceTo(trainingBeacon.position)<3.5){
+      if(onboarding.state.stage===0)onboarding.move(4);
+      if(onboarding.enterBeacon()||onboarding.state.stage===2){
+        dragging=false;lookPointer=null;touch.reset();tracker.resetRecognition();mission.enterRelay(0);practice.begin(['A']);keys.clear();sound('terminal');
+      }
     }
     return;
   }
   if(nearCore&&mission.state.completed.length===3){if(mission.finishAtCore()){tracker.stop();$('camera-panel').hidden=true;sound('win');save();}return;}
   if(nearest!==null&&mission.canEnterRelay(nearest)){dragging=false;lookPointer=null;touch.reset();tracker.resetRecognition();mission.enterRelay(nearest);practice.stop();keys.clear();sound('terminal');}
 }
+$('interact').onclick=()=>{interact();};
+$('interact').addEventListener('pointerdown',e=>{e.stopPropagation();interact();});
 function submit(sign:string,source:'keyboard'|'camera'='keyboard'){
   if(paused||intro||!active||mission.state.phase!=='terminal')return;
   if(academy&&!practice.state.active)return;
@@ -235,7 +278,7 @@ for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.d
 
 $('camera-button').onclick=()=>{
   if(!$('camera-panel').hidden){tracker.stop();$('camera-panel').hidden=true;return;}
-  openModal(`<div class="label gold">EXPERIMENTAL OPTICAL INPUT</div><h2 id="modal-title">A local hand signal.</h2><p>Camera images stay in this browser. Hand landmark coordinates go to the configured recognition service.</p><p>The existing model predicts A/B/C and 1/2/3 labels, with label order and real-world accuracy still unverified. It does not yet verify sign-language vocabulary. Touch and keyboard simulation always work.</p><button class="enter" id="camera-enable">ENABLE CAMERA →</button><button class="enter secondary" id="camera-cancel">KEEP TOUCH / KEYBOARD</button>`);
+  openModal(`<div class="label gold">GESTURE RECOGNITION (EXPERIMENTAL)</div><h2 id="modal-title">Optical Hand Tracking</h2><p>Webcam gesture recognition is an experimental AI feature that connects to a local Python vision server.</p><p><strong>On Mobile & Web:</strong> You can play and transmit all ciphers instantly by tapping the on-screen buttons (<strong>A, B, C, 1, 2, 3</strong>) or <strong>TRANSMIT INPUT</strong>!</p><button class="enter" id="camera-enable">START WEBCAM →</button><button class="enter secondary" id="camera-cancel">USE TOUCH BUTTONS</button>`);
   $('camera-cancel').onclick=closeModal;$('camera-enable').onclick=async()=>{cameraStarting=true;closeModal();$('camera-panel').hidden=false;try{await tracker.start();}finally{cameraStarting=false;}};
 };
 $('camera-close').onclick=()=>{tracker.stop();$('camera-panel').hidden=true;};
@@ -387,8 +430,9 @@ function victory(){
   save();$('letterbox').hidden=true;$('briefing').hidden=true;$('hud').hidden=false;
   const at=CHAPTERS.findIndex(item=>item.id===chapter),next=CHAPTERS[at+1];
   const state=mission.state,elapsed=`${Math.floor(state.elapsed/60)}:${String(Math.floor(state.elapsed%60)).padStart(2,'0')}`;
-  openModal(`<div class="label gold">CHAPTER ${level.number} // RESTORED</div><h2 id="modal-title">${chapter==='spire'?'Paris welcomes<br>the dawn.':'Another light<br>returns to Paris.'}</h2><p>${level.completion}</p><div class="report"><div><strong>3 / 3</strong><small>LINKS RESTORED</small></div><div><strong>${elapsed}</strong><small>MISSION TIME</small></div><div><strong>${discoveries.collected().length} / 5</strong><small>MEMORIES FOUND</small></div></div>${next?`<button class="enter" id="next-chapter">NEXT · ${next.title.toUpperCase()} →</button>`:'<p>All five sectors restored. Your student and friends have a city to explore again.</p>'}<button class="enter secondary" id="survey">EXPLORE THE RESTORED SECTOR →</button><button class="enter secondary" id="victory-map">CHAPTER MAP</button><button class="enter secondary" id="replay">REPLAY THIS CHAPTER</button>`);
+  openModal(`<div class="label gold">CHAPTER ${level.number} // RESTORED</div><h2 id="modal-title">${chapter==='spire'?'Paris welcomes<br>the dawn.':'Another light<br>returns to Paris.'}</h2><p>${level.completion}</p><div class="report"><div><strong>3 / 3</strong><small>LINKS RESTORED</small></div><div><strong>${elapsed}</strong><small>MISSION TIME</small></div><div><strong>${discoveries.collected().length} / 5</strong><small>MEMORIES FOUND</small></div></div>${next?`<button class="enter" id="next-chapter">NEXT · ${next.title.toUpperCase()} →</button>`:'<p>All five sectors restored. Your student and friends have a city to explore again.</p><button class="enter" id="watch-victory">WATCH VICTORY CINEMATIC 🎬</button>'}<button class="enter secondary" id="survey">EXPLORE THE RESTORED SECTOR →</button><button class="enter secondary" id="victory-map">CHAPTER MAP</button><button class="enter secondary" id="replay">REPLAY THIS CHAPTER</button>`);
   if(next)$('next-chapter').onclick=()=>start(hasSave(next.id as MissionChapter),false,next.id as MissionChapter);
+  const watchEnd=$('watch-victory');if(watchEnd)watchEnd.onclick=()=>{closeModal();playVideoModal('./VideoEnd_with_audio_subtitled.mp4','TRANSMISSION // RESISTANCE VICTORY',()=>{openModal(`<div class="label gold">PARIS LIBERATED</div><h2 id="modal-title">The Dawn Returns</h2><p>The resistance has prevailed. All sectors of Paris are restored.</p><button class="enter" id="victory-close">RETURN TO CITY →</button>`);$('victory-close').onclick=closeModal;});};
   $('survey').onclick=closeModal;$('victory-map').onclick=()=>openChapterMap(chapter);$('replay').onclick=()=>start(false,false,chapter);
 }
 

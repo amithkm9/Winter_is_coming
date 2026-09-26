@@ -16,24 +16,25 @@ const scratch=await mkdtemp(path.join(tmpdir(),'winter-app-flow-'));
 after(()=>rm(scratch,{recursive:true,force:true}));
 const output=path.join(scratch,'app.mjs'),entry=path.resolve('src/winter/main.ts');
 await build({entryPoints:[entry],outfile:output,bundle:true,format:'esm',platform:'node',loader:{'.css':'empty'},logLevel:'silent',plugins:[{name:'non-browser-boundaries',setup(b){
- b.onResolve({filter:/^\//,namespace:'fixture'},args=>({path:args.path,namespace:'file'}));
+ b.onResolve({filter:/^([a-zA-Z]:|\/)/,namespace:'fixture'},args=>({path:args.path,namespace:'file'}));
  b.onResolve({filter:/^three$/},args=>args.importer===entry?{path:'renderer',namespace:'fixture'}:undefined);
  b.onResolve({filter:/^\.\/effects$/},args=>args.importer===entry?{path:'effects',namespace:'fixture'}:undefined);
  b.onResolve({filter:/^\.\.\/services\/(camera|api)$/},args=>args.importer===entry?{path:args.path.endsWith('camera')?'camera':'api',namespace:'fixture'}:undefined);
  b.onResolve({filter:/^\.\/audio$/},args=>args.importer===entry?{path:'audio',namespace:'fixture'}:undefined);
  b.onLoad({filter:/.*/,namespace:'fixture'},args=>({loader:'js',contents:{
-  renderer:`export * from ${JSON.stringify(path.resolve('node_modules/three/build/three.module.js'))};export class WebGLRenderer{constructor(){this.domElement=document.createElement('canvas');this.shadowMap={};this.ratio=1;}setPixelRatio(v){this.ratio=v;}getPixelRatio(){return this.ratio;}setSize(){}dispose(){}render(){}}`,
-  effects:`export {createCourier} from ${JSON.stringify(path.resolve('src/winter/effects.ts'))};export const createEffects=()=>({update(){},render(){},resize(){},dispose(){}});`,
+  renderer:`export * from ${JSON.stringify(path.resolve('node_modules/three/build/three.module.js').replace(/\\/g, '/'))};export class WebGLRenderer{constructor(){this.domElement=document.createElement('canvas');this.shadowMap={};this.ratio=1;}setPixelRatio(v){this.ratio=v;}getPixelRatio(){return this.ratio;}setSize(){}dispose(){}render(){}}`,
+  effects:`export {createCourier} from ${JSON.stringify(path.resolve('src/winter/effects.ts').replace(/\\/g, '/'))};export const createEffects=()=>({update(){},render(){},resize(){},dispose(){}});`,
   camera:`export class CameraController{enabled=false;async start(){this.enabled=true;return true;}stop(){this.enabled=false;}resetRecognition(){}}`,
   api:`export async function health(){return null;}export async function getHint(){return{text:'fixture',source:'authored'};}export async function speak(){return false;}export function stopVoice(){}`,
   audio:`export class WinterAudio{configure(){}setPaused(){}async unlock(){}play(){}update(){}dispose(){}}`,
  }[args.path]}));
- b.onLoad({filter:/\/src\/winter\/main\.ts$/},async()=>({loader:'ts',contents:(await readFile(entry,'utf8'))+`\nexport const appFixture={get snapshot(){return{chapter,academy,phase:mission.state.phase,completed:mission.state.completed,world:world.group.name,relays:world.relays.map(r=>({id:r.id,x:r.position.x,z:r.position.z})),core:{x:world.core.x,z:world.core.z},profile:campaign.state};},place(x,z){position.set(x,0,z);velocity.set(0,0,0);updateHud();},step(n=1){for(let i=0;i<n;i++)frame(lastTime+50);},dispose(){touch.dispose();journey.dispose();discoveries.dispose();courier.dispose();world.dispose();}};`}));
+ b.onLoad({filter:/src[\\/]winter[\\/]main\.ts$/},async()=>({loader:'ts',contents:(await readFile(entry,'utf8'))+`\nexport const appFixture={get snapshot(){return{chapter,academy,phase:mission.state.phase,completed:mission.state.completed,world:world.group.name,relays:world.relays.map(r=>({id:r.id,x:r.position.x,z:r.position.z})),core:{x:world.core.x,z:world.core.z},profile:campaign.state};},place(x,z){position.set(x,0,z);velocity.set(0,0,0);updateHud();},step(n=1){for(let i=0;i<n;i++)frame(lastTime+50);},dispose(){cancelAnimationFrame(animation);touch.dispose();journey.dispose();discoveries.dispose();courier.dispose();world.dispose();}};`}));
 }}]});
 let serial=0;
 async function fixture(t,{legacy=false,mobile=false,recovery=false}={}){
  const w=new Window({url:'http://localhost:5173/winter.html',width:mobile?390:1280,height:mobile?844:720});
  w.document.body.innerHTML='<div id="world"></div><main id="winter-ui"></main>';
+ if(w.HTMLMediaElement){w.HTMLMediaElement.prototype.play=async()=>{};w.HTMLMediaElement.prototype.pause=()=>{};}
  if(legacy){const c=new WinterCampaign();c.completeChapter('academy');if(!recovery)c.completeChapter('louvre');w.localStorage.setItem('winter-campaign-v1',c.serialize());const m=new WinterMission();m.start();for(const id of [0,1,2]){m.enterRelay(id);for(const sign of m.state.sequence)m.submit(sign);}m.finishAtCore();m.tick(8,false);w.localStorage.setItem('winter-louvre-v1',m.serialize());}
  w.matchMedia=q=>({matches:q.includes('pointer')?mobile:false,media:q,addEventListener(){},removeEventListener(){}});
  const replacements={window:w,document:w.document,navigator:w.navigator,localStorage:w.localStorage,matchMedia:w.matchMedia,innerWidth:mobile?390:1280,innerHeight:mobile?844:720,devicePixelRatio:1,requestAnimationFrame:()=>1,cancelAnimationFrame:()=>{},CustomEvent:w.CustomEvent};
