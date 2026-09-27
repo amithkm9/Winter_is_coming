@@ -11,7 +11,10 @@
     "test": "node --test tests/*.test.mjs",
     "test:winter-world": "node scripts/winter-world-smoke.mjs",
     "package:itch": "npm run build && python3 scripts/package_itch.py",
-    "package:winter": "npm run package:itch"
+    "package:winter": "npm run package:itch",
+    "format": "prettier --write src tests \"scripts/**/*.mjs\" vite.config.ts \"*.json\" \"*.html\"",
+    "format:check": "prettier --check src tests \"scripts/**/*.mjs\" vite.config.ts \"*.json\" \"*.html\"",
+    "test:chapters": "node scripts/chapter-worlds-preview.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.32",
@@ -20,9 +23,13 @@
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.9",
     "@types/three": "^0.186.0",
+    "esbuild": "^0.28.2",
     "happy-dom": "^20.14.5",
+    "prettier": "3.9.9",
     "typescript": "~5.9.3",
-    "vite": "^7.1.7",
-    "esbuild": "^0.28.2"
+    "vite": "^7.1.7"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

@@ -4,6 +4,9 @@ Implemented means a feature exists with relevant automated checks. It does not c
 
 ## Implemented
 
+- [x] One maintained game/backend, grouped styles/tests/model, shared preview renderer and repeatable formatting/unused-code checks.
+- [x] Supplied Level 1 ending film with saved progression, skip/continue and replay controls.
+
 - [x] Supplied opening film with tap-to-start, pause, mute, skip and failure recovery; defer 3D loading until playback ends.
 - [x] Three students, persistent chapter map, safe training and five playable prototype missions.
 - [x] Sequential unlocks, separate mission saves, truthful training skip and scoped adventure reset.

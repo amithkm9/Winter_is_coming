@@ -1,7 +1,7 @@
 """Optional legacy model adapter. Labels remain unverified until live calibration."""
 
-from importlib.util import find_spec
 import math
+from importlib.util import find_spec
 from pathlib import Path
 from threading import Lock
 
@@ -58,6 +58,7 @@ class Recognizer:
                     raise RecognitionUnavailable()
                 try:
                     import tensorflow as tf
+
                     model = tf.keras.models.load_model(str(self.path), compile=False)
                     if tuple(model.input_shape[1:]) != (30, 63) or model.output_shape[-1] != 6:
                         raise ValueError("Incompatible model")
@@ -69,6 +70,7 @@ class Recognizer:
         self._ensure_loaded()
         try:
             import numpy as np
+
             with self._infer_lock:
                 # A direct inference call avoids predict()'s dataset/threadpool setup
                 # for each tiny interactive request; no training state is updated.
@@ -89,8 +91,13 @@ class Recognizer:
         # Load AND execute the graph before processing captured landmarks. Synthetic data has no
         # linguistic interpretation and is never returned as a detected gesture.
         self._predict([[0.0] * 63 for _ in range(SEQUENCE_LENGTH)])
-        return {"ready": True, "verified": False, "labels": list(LABELS),
-                "sequenceLength": SEQUENCE_LENGTH, "featuresPerFrame": 63}
+        return {
+            "ready": True,
+            "verified": False,
+            "labels": list(LABELS),
+            "sequenceLength": SEQUENCE_LENGTH,
+            "featuresPerFrame": 63,
+        }
 
     def recognize(self, frames: list[list[list[float]]]) -> dict:
         sequence = preprocess(frames)
@@ -98,7 +105,11 @@ class Recognizer:
         try:
             winner = max(range(len(scores)), key=lambda i: scores[i])
             confidence = float(scores[winner])
-            return {"sign": LABELS[winner] if confidence >= self.threshold else None,
-                    "confidence": confidence, "source": "model", "verified": False}
+            return {
+                "sign": LABELS[winner] if confidence >= self.threshold else None,
+                "confidence": confidence,
+                "source": "model",
+                "verified": False,
+            }
         except Exception as exc:
             raise RecognitionUnavailable() from exc

@@ -1,6 +1,6 @@
 import { showOpeningFilm } from './opening-film';
 import { consumeWinterReset } from './reset';
-import './opening-film.css';
+import './styles/opening-film.css';
 
 // Relative URLs survive itch.io's nested HTML5 upload paths.
 let opening: ReturnType<typeof showOpeningFilm> | undefined;
@@ -13,7 +13,8 @@ try {
   });
 } catch {
   const notice = document.createElement('section');
-  notice.innerHTML = '<h1>Could not reset your adventure</h1><p>Your browser did not allow the saved data to be cleared. Allow site storage, then retry.</p><button type="button">TRY RESET AGAIN</button>';
+  notice.innerHTML =
+    '<h1>Could not reset your adventure</h1><p>Your browser did not allow the saved data to be cleared. Allow site storage, then retry.</p><button type="button">TRY RESET AGAIN</button>';
   notice.querySelector('button')!.onclick = () => location.reload();
   document.body.append(notice);
 }

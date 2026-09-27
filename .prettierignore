@@ -1,0 +1,6 @@
+node_modules/
+dist/
+artifacts/
+backend/.venv/
+public/
+package-lock.json

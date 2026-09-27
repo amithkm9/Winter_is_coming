@@ -1,6 +1,0 @@
-# Optional. Python 3.12; do not install into Python 3.14.
--r requirements.txt
-tensorflow==2.16.2
-# Versions validated against the user's archived Keras H5 model.
-keras==3.15.1
-numpy==1.26.4

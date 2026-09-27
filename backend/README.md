@@ -1,74 +1,61 @@
-# Backend — Task & Mission Generation Engine (Phase 3)
+# Recognition and companion service
 
-FastAPI service that turns a Paris district into a validated mission payload:
-procedural gesture sequence + difficulty tier, narrative from Gemini with a
-deterministic offline fallback, and real-time step validation over REST or
-WebSocket.
+The current game uses this FastAPI service on **port 8100**. There is one backend; the obsolete port-8000 mission engine has been removed.
 
-## Setup
+## Run locally
 
-```bash
+Use Python 3.12 for the supplied TensorFlow model. From the repository root:
+
+```sh
 cd backend
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
-uvicorn app.main:app --reload --port 8000
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements-model.txt -r requirements-dev.txt
+cp .env.example .env
+.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8100
 ```
 
-Interactive docs: http://localhost:8000/docs
+Copy the example only on first setup; keep an existing `.env`. Start from `backend/` so the example's relative model path resolves correctly. An absolute `LEARNSIGN_MODEL_PATH` is also supported. Installing only `requirements.txt` enables optional hints/voice without TensorFlow; the game remains playable with simulated inputs.
+
+## Files
+
+- `main.py`: API validation, provider adapters, rate limits and recognition routes.
+- `recognition.py`: landmark preprocessing, model loading and inference.
+- `models/`: the supplied H5 weights and model notes. Never served by Vite or included in itch.io builds.
+- `demo_gateway.py`: restricted recognition-only proxy for a temporary HTTPS demo.
+- `inspect_model.py`: read-only model shape/hash/synthetic inference diagnostic.
+- `tests/`: API, model-boundary and gateway tests.
 
 ## Configuration
 
-| Variable | Default | Purpose |
-| :--- | :--- | :--- |
-| `GEMINI_API_KEY` | unset | Enables Gemini narrative generation. Without it the engine runs fully offline. |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Model used for briefings, taunts and riddles. |
-| `GEMINI_TIMEOUT_SECONDS` | `3.0` | Any timeout or error falls back to the built-in narrative. |
-| `ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Comma-separated CORS origins. |
+| Variable | Purpose |
+| --- | --- |
+| `LEARNSIGN_MODEL_PATH` | Trusted H5 file; example uses `models/sign_language_numbers_letters.h5`. |
+| `LEARNSIGN_CONFIDENCE` | Minimum model confidence; default `0.85`. Confidence is not measured accuracy. |
+| `CORS_ORIGINS` | Comma-separated frontend origins for the main service. |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Optional generated hints, with authored fallback. |
+| `GRADIUM_API_KEY`, `GRADIUM_VOICE_ID` | Optional spoken hints; readable text stays available. |
 
 ## API
 
-| Method | Path | Description |
-| :--- | :--- | :--- |
-| `GET` | `/health` | Status and active narrative engine (`gemini` / `fallback`). |
-| `GET` | `/api/districts` | The 16 districts, AI nodes and sign pools. |
-| `GET` | `/api/districts/{id}/task` | Generate a mission payload (stateless preview). |
-| `POST` | `/api/districts/{id}/missions` | Start a mission session and return its state. |
-| `GET` | `/api/missions/{sessionId}` | Current session state. |
-| `POST` | `/api/missions/{sessionId}/attempts` | Validate a gesture attempt, advance the step. |
-| `WS` | `/api/ws/missions/{sessionId}` | Streams `MISSION_STARTED`, `STEP_RESULT`, `DISTRICT_LIBERATED`, `MISSION_FAILED`. |
+| Method | Route | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Configuration and model-file availability. |
+| POST | `/api/recognition/warmup` | Load and run model before starting recognition. |
+| POST | `/api/recognize` | Classify 30 frames of 21 hand landmarks (XYZ). |
+| POST | `/api/hint` | Contextual hint or authored fallback. |
+| POST | `/api/voice` | Optional audio for a readable hint. |
 
-A gesture attempt is accepted only when the gesture key matches the expected
-step and both the confidence and hold duration meet the tier thresholds, so the
-vision pipeline (Phase 2) can push raw classifications without duplicating the
-rules.
+Local interactive documentation: <http://127.0.0.1:8100/docs>.
 
-## Difficulty tiers
+## Verify
 
-| Tier | Districts | Signs | Hold | Confidence | Time | Counter-measure |
-| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
-| 1 | 1–4 | 1 | 1.0s | 0.85 | 30s | none |
-| 2 | 5–8 | 2 | 1.5s | 0.85 | 20s | none |
-| 3 | 9–12 | 3 | 1.5s | 0.87 | 18s | visual static |
-| 4 | 13–16 | 3 | 1.0s | 0.90 | 15s | core overclock |
-
-## Tests and lint
-
-```bash
-pytest -q
-ruff check .
-```
-
-
-## Root 3D game's recognition service
-
-This directory also contains the independent `main.py` recognition/companion service used by the root Three.js game. It runs as `main:app` on **8100**, separate from the `app.main:app` task engine on **8000**.
-
-Install `requirements-model.txt` for H5 inference and set `LEARNSIGN_MODEL_PATH` to your trusted model file in a local `.env`. The browser opens its preview first, then calls `/api/recognition/warmup` before sending landmark sequences. Warmup does not establish recognition accuracy. Gemini and Gradium use server-side keys; configure `CORS_ORIGINS` for the deployed game's origin.
-
-From the repository root:
+From `backend/`:
 
 ```sh
-backend/.venv/bin/python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8100
+.venv/bin/python -m pytest -q
+.venv/bin/ruff check . ../scripts/package_itch.py
+.venv/bin/ruff format --check . ../scripts/package_itch.py
+.venv/bin/python inspect_model.py
 ```
 
-See [model status](MODEL_STATUS.md) and the [mobile/deployment guide](../docs/MOBILE_ITCH.md). The legacy task engine's `/health` is not a substitute for the recognition service's `/api/health` or `/api/recognition/warmup`.
+The model diagnostic requires model dependencies and configuration. Synthetic inference verifies technical compatibility, not real-hand accuracy. See [model status](MODEL_STATUS.md), [deployment](../docs/MOBILE_ITCH.md), and [temporary demo gateway](../docs/ITCH_RECOGNITION_DEMO.md).

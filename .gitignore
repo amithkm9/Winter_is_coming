@@ -1,67 +1,41 @@
-# Dependencies
+# Dependencies and Python environments
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Python
+.venv/
+venv/
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
 
-# Build outputs
+# Generated builds, previews and test output
 dist/
-out/
 build/
-.next/
+artifacts/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage/
+*.log
 
-# Environment and secrets
+# Local configuration and credentials
 .env
-.env*.local
+.env.*
+!.env.example
 *.pem
 credentials.json
 TOKEN_USAGE.md
 
-# IDE and OS
+# Extra local models (keep the supplied server model versioned)
+*.h5
+*.keras
+!backend/models/sign_language_numbers_letters.h5
+
+# Editor, OS and workspace tools
+.DS_Store
+Thumbs.db
+.idea/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
-.idea/
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
-
-# Workspace / agent tools
 .kilo/
-
-# Root 3D game local output/configuration
-artifacts/
-.pytest_cache/
-.coverage
-coverage/
-.env.*
-!.env.example
-*.h5
-*.keras

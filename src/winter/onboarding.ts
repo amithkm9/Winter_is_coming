@@ -11,10 +11,17 @@ export class WinterOnboarding {
   private distance = 0;
 
   get state(): WinterOnboardingState {
-    return Object.freeze({ stage: this.stage, distance: this.distance, complete: this.stage === 3 });
+    return Object.freeze({
+      stage: this.stage,
+      distance: this.distance,
+      complete: this.stage === 3,
+    });
   }
 
-  reset(): void { this.stage = 0; this.distance = 0; }
+  reset(): void {
+    this.stage = 0;
+    this.distance = 0;
+  }
 
   move(distanceMeters: number): void {
     if (this.stage !== 0 || !Number.isFinite(distanceMeters) || distanceMeters <= 0) return;

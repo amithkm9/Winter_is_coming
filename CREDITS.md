@@ -13,7 +13,9 @@
 
 The current opening was supplied as `Opening_Full_subtitled.mp4` and remuxed into `public/video/opening-subtitled.mp4` with faststart for progressive playback. Its burned-in subtitles, picture and audio are preserved without re-encoding. Its poster is extracted from the film. Footage/audio remain attributable to their respective creators; supply does not establish redistribution rights. This is not newly generated footage.
 
-The pre-existing `sign_language_numbers_letters.h5` came from the user's earlier project. It runs on the Python service and is excluded from static packages. Training-data provenance, original class order and real-hand accuracy are unverified. See [model status](backend/MODEL_STATUS.md).
+The ending was supplied as `VideoEnd_with_audio_subtitled.mp4` and remuxed without re-encoding into `public/video/level-1-ending.mp4`; its poster is extracted from the same footage.
+
+The pre-existing `backend/models/sign_language_numbers_letters.h5` came from the user's earlier project. It runs on the Python service and is excluded from static packages. Training-data provenance, original class order and real-hand accuracy are unverified. See [model status](backend/MODEL_STATUS.md).
 
 ## ASL illustrations
 

@@ -34,7 +34,7 @@ A drone scan or danger zone starts a **five-second countdown**. Move completely 
 
 Press **V** or the **VIEW** button to switch between third-person and first-person (eye-level) views. Your choice is saved. In eye view, drag horizontally to turn and vertically to look up or down; the camera stays at the student’s eye height without walking bob. Story cinematics still use the cinematic camera, then return to your chosen view.
 
-Use **Shift** to run. Press **Esc** or the pause button to take a break, change settings, return to the chapter map, or return to the title.
+Movement runs by default; use **Shift** for a faster sprint. Press **Esc** or the pause button to take a break, change settings, return to the chapter map, or return to the title.
 
 The student faces the direction they travel. If a wall blocks one direction, the character follows the direction they can actually move. The camera stays behind the area you are exploring; it does not force the character to face away from you. Moving toward the camera lets you see the character's face.
 
@@ -54,7 +54,7 @@ The keyboard and on-screen simulation button always remain available. A valid ca
 
 Look for five golden memory sparks around the courtyard. Collecting them adds pages to the student’s journal. Finding all five unlocks a golden explorer scarf. These discoveries are optional.
 
-After restoring all three relays, return to the core in front of the pyramid and press **Enter** or tap **ENTER**. An eight-second scene brings warmth and light back to the courtyard. The next chapter unlocks immediately. **Next chapter unlocked · Open map** highlights that chapter, and the next-level play button starts it directly. You can also explore the liberated sector or replay the operation.
+After restoring all three relays, return to the core in front of the pyramid and press **Enter** or tap **ENTER**. An eight-second scene brings warmth and light back to the courtyard. The next chapter unlocks immediately and progress is saved before the supplied subtitled ending film is offered. Watch it with sound or choose Continue to reach the completion panel. **Next chapter unlocked · Open map** highlights that chapter, and the next-level play button starts it directly. You can also explore the liberated sector or replay the operation.
 
 ## Continue later
 
